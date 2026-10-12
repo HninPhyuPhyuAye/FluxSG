@@ -6,6 +6,7 @@ node_modules/
 .pnpm-store/
 coverage/
 dist/
+out/
 __pycache__/
 .pytest_cache/
 .ruff_cache/

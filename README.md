@@ -8,6 +8,14 @@ real production system rather than a dashboard-only demo: source adapters,
 quality contracts, historical storage, transformations, forecasting,
 observable APIs, and an accessible decision interface.
 
+## Live dashboard
+
+**[Open FluxSG](https://hninphyuphyuaye.github.io/FluxSG/)**
+
+The public dashboard refreshes official data.gov.sg readings in the browser
+every five minutes. The FastAPI service remains the validated backend for local
+Docker operation and the upcoming persistence and analytics milestones.
+
 ## Current milestone
 
 Milestone 1 establishes a tested vertical slice:
@@ -18,6 +26,7 @@ Milestone 1 establishes a tested vertical slice:
 - an LTA DataMall readiness endpoint without exposing credentials;
 - a responsive Next.js operations dashboard;
 - containerised local development and automated CI checks.
+- public delivery through GitHub Pages.
 
 ## Architecture
 

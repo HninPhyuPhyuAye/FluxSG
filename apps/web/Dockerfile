@@ -6,6 +6,8 @@ COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM dependencies AS build
+ARG NEXT_PUBLIC_FLUXSG_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_FLUXSG_API_URL=$NEXT_PUBLIC_FLUXSG_API_URL
 COPY apps/web apps/web
 RUN pnpm --filter @fluxsg/web build
 

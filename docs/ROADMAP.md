@@ -8,7 +8,7 @@
 - [x] Normalised API contract and data-quality summary
 - [x] Responsive operations dashboard
 - [x] API unit tests and CI workflow
-- [ ] Public preview deployment
+- [x] Public preview deployment
 
 **Evidence:** working demo, source-health states, tests, architecture record.
 

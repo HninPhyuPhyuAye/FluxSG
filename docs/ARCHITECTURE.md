@@ -30,6 +30,11 @@ flowchart LR
   beats a transparent naive prediction on held-out time periods.
 - **Credentials stay server-side.** LTA keys are read from environment or a
   cloud secret manager and never sent to the browser.
+- **Public preview has a credential-free fallback.** GitHub Pages cannot run a
+  Python service, so the static dashboard reads only CORS-enabled,
+  unauthenticated data.gov.sg feeds in the browser. Local Docker uses the same
+  UI through the FastAPI contract. Authenticated LTA traffic will remain
+  server-side once the production API is deployed.
 
 ## Repository layout
 

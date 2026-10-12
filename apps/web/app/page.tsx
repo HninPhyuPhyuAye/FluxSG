@@ -1,5 +1,8 @@
+"use client";
+
 import { getAirQuality, getLtaStatus, getWeather } from "@/lib/api";
-import { connection } from "next/server";
+import { useEffect, useState } from "react";
+import type { AirQualitySnapshot, LtaStatus, WeatherOutlook } from "@/lib/api";
 
 function formatTime(value?: string): string {
   if (!value) return "Unavailable";
@@ -12,15 +15,33 @@ function formatTime(value?: string): string {
   }).format(new Date(value));
 }
 
-export default async function Home() {
-  // Live operational readings must be resolved inside the running environment,
-  // not frozen into the image during `next build`.
-  await connection();
-  const [weather, airQuality, lta] = await Promise.all([
-    getWeather(),
-    getAirQuality(),
-    getLtaStatus(),
-  ]);
+export default function Home() {
+  const [weather, setWeather] = useState<WeatherOutlook | null>(null);
+  const [airQuality, setAirQuality] = useState<AirQualitySnapshot | null>(null);
+  const [lta, setLta] = useState<LtaStatus | null>(null);
+  const [feedState, setFeedState] = useState("Connecting");
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const [nextWeather, nextAirQuality, nextLta] = await Promise.all([
+        getWeather(),
+        getAirQuality(),
+        getLtaStatus(),
+      ]);
+      if (!active) return;
+      setWeather(nextWeather);
+      setAirQuality(nextAirQuality);
+      setLta(nextLta);
+      setFeedState(nextWeather || nextAirQuality ? "Live" : "Feed unavailable");
+    };
+    void refresh();
+    const interval = window.setInterval(refresh, 5 * 60 * 1000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
   const forecastGroups = Object.entries(
     (weather?.forecasts ?? []).reduce<Record<string, number>>((groups, item) => {
       groups[item.forecast] = (groups[item.forecast] ?? 0) + 1;
@@ -36,7 +57,7 @@ export default async function Home() {
           <span className="brand-mark">F</span>
           <span>FluxSG</span>
         </a>
-        <span className="system-state"><i /> Milestone 01 · Live</span>
+        <span className="system-state"><i /> Milestone 01 · {feedState}</span>
       </header>
 
       <section className="hero" id="top">
@@ -72,8 +93,8 @@ export default async function Home() {
           <p>{weather?.quality.status ?? "Source offline"}</p>
         </article>
         <article className="metric">
-          <span className="metric-label">LTA integration</span>
-          <strong className="small-value">{lta?.configured ? "Ready" : "Key needed"}</strong>
+          <span className="metric-label">Transport data</span>
+          <strong className="small-value">{lta?.configured ? "Ready" : "Next phase"}</strong>
           <p>{lta?.next_step ?? "API unavailable"}</p>
         </article>
       </section>
