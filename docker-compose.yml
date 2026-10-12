@@ -1,0 +1,27 @@
+services:
+  api:
+    build:
+      context: ./services/api
+    environment:
+      CORS_ORIGINS: http://localhost:3000
+      LTA_ACCOUNT_KEY: ${LTA_ACCOUNT_KEY:-}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+

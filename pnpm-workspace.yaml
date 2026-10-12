@@ -1,0 +1,7 @@
+packages:
+  - "apps/*"
+
+# The resolver ships platform binaries; its optional source build is unnecessary
+# for this repository and is explicitly denied for reproducible installs.
+allowBuilds:
+  unrs-resolver: false

@@ -1,0 +1,14 @@
+{
+  "name": "fluxsg",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "dev": "pnpm --filter @fluxsg/web dev",
+    "build": "pnpm --filter @fluxsg/web build",
+    "lint": "pnpm --filter @fluxsg/web lint",
+    "typecheck": "pnpm --filter @fluxsg/web typecheck",
+    "test": "pnpm --filter @fluxsg/web test"
+  }
+}
+
