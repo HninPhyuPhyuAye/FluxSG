@@ -1,6 +1,7 @@
 import httpx
 import pytest
 
+from app.core.config import Settings
 from app.main import app
 
 
@@ -28,5 +29,16 @@ async def test_lta_is_safe_when_key_is_missing() -> None:
         "state": "awaiting_credentials",
         "next_step": "Add LTA_ACCOUNT_KEY to the local environment",
     }
+
+
+def test_cors_origins_accept_compose_environment_format(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+
+    settings = Settings()
+
+    assert settings.cors_origins == [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
 

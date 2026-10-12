@@ -1,4 +1,5 @@
-import { getLtaStatus, getWeather } from "@/lib/api";
+import { getAirQuality, getLtaStatus, getWeather } from "@/lib/api";
+import { connection } from "next/server";
 
 function formatTime(value?: string): string {
   if (!value) return "Unavailable";
@@ -12,7 +13,14 @@ function formatTime(value?: string): string {
 }
 
 export default async function Home() {
-  const [weather, lta] = await Promise.all([getWeather(), getLtaStatus()]);
+  // Live operational readings must be resolved inside the running environment,
+  // not frozen into the image during `next build`.
+  await connection();
+  const [weather, airQuality, lta] = await Promise.all([
+    getWeather(),
+    getAirQuality(),
+    getLtaStatus(),
+  ]);
   const forecastGroups = Object.entries(
     (weather?.forecasts ?? []).reduce<Record<string, number>>((groups, item) => {
       groups[item.forecast] = (groups[item.forecast] ?? 0) + 1;
@@ -70,6 +78,68 @@ export default async function Home() {
         </article>
       </section>
 
+      <section
+        className={`haze-alert ${airQuality?.haze_alert ? "active" : "clear"}`}
+        aria-labelledby="haze-title"
+      >
+        <div className="haze-score">
+          <span>24-hour PSI</span>
+          <strong>{airQuality?.national_psi ?? "—"}</strong>
+          <em>{airQuality?.national_level ?? "Feed unavailable"}</em>
+        </div>
+        <div className="haze-copy">
+          <p className="eyebrow">Citizen haze watch · Official regional readings</p>
+          <h2 id="haze-title">
+            {airQuality?.haze_alert
+              ? "Haze alert: make the air part of today’s plan."
+              : "Air-quality watch across all five regions."}
+          </h2>
+          <p>{airQuality?.guidance.general_population ?? "Start the API to load current guidance."}</p>
+          {airQuality && (
+            <p className="sensitive-note">
+              <strong>Sensitive groups:</strong> {airQuality.guidance.sensitive_groups}
+            </p>
+          )}
+          <div className="haze-meta">
+            <span>Observed {formatTime(airQuality?.observed_at)}</span>
+            <span>{airQuality?.quality.completeness_percent ?? "—"}% complete</span>
+            <a href="https://www.haze.gov.sg/" target="_blank" rel="noreferrer">
+              Official haze guidance ↗
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="region-section" aria-labelledby="regions-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Your part of Singapore</p>
+            <h2 id="regions-title">Regional air-quality check</h2>
+          </div>
+          <p>PSI uses a 24-hour average. PM2.5 1h shows the more immediate particle reading.</p>
+        </div>
+        <div className="region-grid">
+          {(airQuality?.regions ?? []).map((region) => (
+            <article className={`region-card level-${region.level.toLowerCase().replaceAll(" ", "-")}`} key={region.region}>
+              <div className="region-name">
+                <span>{region.region}</span>
+                <i aria-label={`${region.level} air quality`} />
+              </div>
+              <strong>{region.psi_24h}</strong>
+              <span className="region-level">{region.level}</span>
+              <dl>
+                <div><dt>PM2.5 · 1h</dt><dd>{region.pm25_1h}</dd></div>
+                <div><dt>PM2.5 · 24h</dt><dd>{region.pm25_24h}</dd></div>
+              </dl>
+            </article>
+          ))}
+          {!airQuality && <div className="empty-state">Air-quality feed is currently unavailable.</div>}
+        </div>
+        <p className="health-disclaimer">
+          {airQuality?.guidance.disclaimer ?? "General information only. Follow official health advice."}
+        </p>
+      </section>
+
       <section className="content-grid">
         <article className="panel conditions">
           <div className="panel-heading">
@@ -117,7 +187,7 @@ export default async function Home() {
 
       <footer>
         <span>FluxSG · Built by Hnin Phyu Phyu Aye</span>
-        <span>Not an official transport service</span>
+        <span>Not an official government service</span>
       </footer>
     </main>
   );

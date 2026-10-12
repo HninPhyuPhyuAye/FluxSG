@@ -1,0 +1,14 @@
+.git
+.github
+.next
+.venv
+node_modules
+**/.next
+**/__pycache__
+**/*.egg-info
+**/*.pyc
+.DS_Store
+.env
+coverage
+tmp
+

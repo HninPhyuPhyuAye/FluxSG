@@ -1,7 +1,8 @@
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -11,10 +12,14 @@ class Settings(BaseSettings):
 
     app_name: str = "FluxSG API"
     environment: str = "development"
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["http://localhost:3000"]
+    )
     data_gov_weather_url: str = (
         "https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast"
     )
+    data_gov_psi_url: str = "https://api-open.data.gov.sg/v2/real-time/api/psi"
+    data_gov_pm25_url: str = "https://api-open.data.gov.sg/v2/real-time/api/pm25"
     lta_account_key: str | None = None
     source_timeout_seconds: float = 8.0
 

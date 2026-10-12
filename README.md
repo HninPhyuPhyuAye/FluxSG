@@ -13,6 +13,7 @@ observable APIs, and an accessible decision interface.
 Milestone 1 establishes a tested vertical slice:
 
 - a FastAPI service that normalises the live NEA two-hour forecast;
+- a citizen-facing haze watch combining official PSI and PM2.5 feeds;
 - explicit freshness, completeness, and source-health signals;
 - an LTA DataMall readiness endpoint without exposing credentials;
 - a responsive Next.js operations dashboard;

@@ -4,6 +4,7 @@
 
 - [x] Monorepo foundation and project documentation
 - [x] Live data.gov.sg weather adapter
+- [x] Five-region PSI and PM2.5 haze watch with official guidance link
 - [x] Normalised API contract and data-quality summary
 - [x] Responsive operations dashboard
 - [x] API unit tests and CI workflow
