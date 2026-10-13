@@ -335,8 +335,8 @@ export async function getLtaStatus(): Promise<LtaStatus> {
   return (await request<LtaStatus>("/api/v1/integrations/lta")) ?? {
     source: "LTA DataMall",
     configured: false,
-    state: "planned",
-    next_step: "Transport feeds join in Milestone 2",
+    state: "secured_backend_only",
+    next_step: "Live arrivals require the secured backend",
   };
 }
 
