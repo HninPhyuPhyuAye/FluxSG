@@ -1,11 +1,14 @@
 from datetime import UTC, datetime
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.models.weather import IntegrationStatus
 
 router = APIRouter(tags=["system"])
+
+SettingsDependency = Annotated[Settings, Depends(get_settings)]
 
 
 @router.get("/health")
@@ -18,14 +21,14 @@ async def health() -> dict[str, str]:
 
 
 @router.get("/api/v1/integrations/lta", response_model=IntegrationStatus)
-async def lta_status() -> IntegrationStatus:
-    configured = bool(get_settings().lta_account_key)
+async def lta_status(settings: SettingsDependency) -> IntegrationStatus:
+    configured = bool(settings.lta_account_key)
     return IntegrationStatus(
         source="LTA DataMall",
         configured=configured,
         state="ready" if configured else "awaiting_credentials",
         next_step=(
-            "Run the first metadata ingestion"
+            "Search stops or request a live arrival board"
             if configured
             else "Add LTA_ACCOUNT_KEY to the local environment"
         ),

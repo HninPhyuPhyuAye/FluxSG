@@ -1,8 +1,22 @@
 "use client";
 
-import { getAirQuality, getLtaStatus, getWeather } from "@/lib/api";
+import {
+  getAirQuality,
+  getBusArrivals,
+  getLtaStatus,
+  getTransportNetwork,
+  getWeather,
+  searchBusStops,
+} from "@/lib/api";
 import { useEffect, useState } from "react";
-import type { AirQualitySnapshot, LtaStatus, WeatherOutlook } from "@/lib/api";
+import type {
+  AirQualitySnapshot,
+  BusArrivalBoard,
+  BusStop,
+  LtaStatus,
+  TransportNetworkSummary,
+  WeatherOutlook,
+} from "@/lib/api";
 
 function formatTime(value?: string): string {
   if (!value) return "Unavailable";
@@ -19,21 +33,31 @@ export default function Home() {
   const [weather, setWeather] = useState<WeatherOutlook | null>(null);
   const [airQuality, setAirQuality] = useState<AirQualitySnapshot | null>(null);
   const [lta, setLta] = useState<LtaStatus | null>(null);
+  const [transport, setTransport] = useState<TransportNetworkSummary | null>(null);
   const [feedState, setFeedState] = useState("Connecting");
+  const [stopQuery, setStopQuery] = useState("");
+  const [stopResults, setStopResults] = useState<BusStop[]>([]);
+  const [arrivalBoard, setArrivalBoard] = useState<BusArrivalBoard | null>(null);
+  const [transportMessage, setTransportMessage] = useState(
+    "Search by stop code, road, or landmark.",
+  );
+  const [transportBusy, setTransportBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
     const refresh = async () => {
-      const [nextWeather, nextAirQuality, nextLta] = await Promise.all([
+      const [nextWeather, nextAirQuality, nextLta, nextTransport] = await Promise.all([
         getWeather(),
         getAirQuality(),
         getLtaStatus(),
+        getTransportNetwork(),
       ]);
       if (!active) return;
       setWeather(nextWeather);
       setAirQuality(nextAirQuality);
       setLta(nextLta);
-      setFeedState(nextWeather || nextAirQuality ? "Live" : "Feed unavailable");
+      setTransport(nextTransport);
+      setFeedState(nextWeather || nextAirQuality || nextTransport ? "Live" : "Feed unavailable");
     };
     void refresh();
     const interval = window.setInterval(refresh, 5 * 60 * 1000);
@@ -49,6 +73,37 @@ export default function Home() {
     }, {}),
   ).sort((a, b) => b[1] - a[1]);
   const primaryCondition = forecastGroups[0]?.[0] ?? "Feed unavailable";
+  const transportAvailable = Boolean(transport && lta?.configured);
+
+  const handleStopSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = stopQuery.trim();
+    if (query.length < 2 || !transportAvailable) return;
+    setTransportBusy(true);
+    setArrivalBoard(null);
+    setTransportMessage("Searching the LTA stop directory…");
+    const result = await searchBusStops(query);
+    setStopResults(result?.stops ?? []);
+    setTransportMessage(
+      result?.stops.length
+        ? `${result.stops.length} matching stop${result.stops.length === 1 ? "" : "s"}`
+        : "No matching bus stops found.",
+    );
+    setTransportBusy(false);
+  };
+
+  const selectStop = async (stop: BusStop) => {
+    setTransportBusy(true);
+    setTransportMessage(`Loading live arrivals for ${stop.description || stop.road_name}…`);
+    const board = await getBusArrivals(stop.code);
+    setArrivalBoard(board);
+    setTransportMessage(
+      board
+        ? `Updated ${formatTime(board.fetched_at)} from LTA DataMall`
+        : "Live arrivals are temporarily unavailable.",
+    );
+    setTransportBusy(false);
+  };
 
   return (
     <main>
@@ -57,7 +112,7 @@ export default function Home() {
           <span className="brand-mark">F</span>
           <span>FluxSG</span>
         </a>
-        <span className="system-state"><i /> Milestone 01 · {feedState}</span>
+        <span className="system-state"><i /> Milestone 02 · {feedState}</span>
       </header>
 
       <section className="hero" id="top">
@@ -94,9 +149,91 @@ export default function Home() {
         </article>
         <article className="metric">
           <span className="metric-label">Transport data</span>
-          <strong className="small-value">{lta?.configured ? "Ready" : "Next phase"}</strong>
-          <p>{lta?.next_step ?? "API unavailable"}</p>
+          <strong className="small-value">
+            {transport ? `${transport.bus_stop_count.toLocaleString("en-SG")} stops` : "Secured API"}
+          </strong>
+          <p>
+            {transport
+              ? `${transport.service_count} services · ${transport.route_pattern_count} patterns`
+              : lta?.next_step ?? "Credential stays server-side"}
+          </p>
         </article>
+      </section>
+
+      <section className="transit-console" aria-labelledby="transit-title">
+        <div className="transit-intro">
+          <p className="eyebrow">Live LTA movement layer</p>
+          <h2 id="transit-title">Find a stop. Read the next three buses.</h2>
+          <p>
+            Search the official stop directory, then inspect live arrivals, crowding,
+            vehicle type, and wheelchair accessibility without exposing the AccountKey.
+          </p>
+          <div className="network-proof" aria-label="LTA network summary">
+            <div><strong>{transport?.bus_stop_count.toLocaleString("en-SG") ?? "—"}</strong><span>bus stops</span></div>
+            <div><strong>{transport?.service_count ?? "—"}</strong><span>services</span></div>
+            <div><strong>{transport?.quality.completeness_percent ?? "—"}%</strong><span>validated</span></div>
+          </div>
+        </div>
+        <div className="arrival-tool">
+          <form className="stop-search" onSubmit={handleStopSearch}>
+            <label htmlFor="stop-query">Bus stop, road, or landmark</label>
+            <div>
+              <input
+                id="stop-query"
+                value={stopQuery}
+                onChange={(event) => setStopQuery(event.target.value)}
+                placeholder="Try 01012 or Raffles"
+                minLength={2}
+                disabled={!transportAvailable}
+              />
+              <button type="submit" disabled={!transportAvailable || transportBusy || stopQuery.trim().length < 2}>
+                {transportBusy ? "Loading" : "Search"}
+              </button>
+            </div>
+          </form>
+          {!transportAvailable && (
+            <p className="secure-note">
+              The public preview keeps the LTA credential private. Run the secured API build
+              locally to activate stop search and live arrivals.
+            </p>
+          )}
+          <p className="tool-status" aria-live="polite">{transportMessage}</p>
+          {stopResults.length > 0 && !arrivalBoard && (
+            <div className="stop-results">
+              {stopResults.map((stop) => (
+                <button type="button" key={stop.code} onClick={() => void selectStop(stop)}>
+                  <span><strong>{stop.code}</strong>{stop.description || "Unnamed stop"}</span>
+                  <small>{stop.road_name}</small>
+                </button>
+              ))}
+            </div>
+          )}
+          {arrivalBoard && (
+            <div className="arrival-board">
+              <div className="arrival-heading">
+                <div><span>{arrivalBoard.bus_stop.code}</span><strong>{arrivalBoard.bus_stop.description}</strong></div>
+                <button type="button" onClick={() => setArrivalBoard(null)}>Change stop</button>
+              </div>
+              <div className="service-list">
+                {arrivalBoard.services.map((service) => (
+                  <article key={service.service_no}>
+                    <div className="service-number">{service.service_no}</div>
+                    <div className="arrival-times">
+                      {service.arrivals.length ? service.arrivals.map((arrival) => (
+                        <div key={arrival.estimated_arrival} className={`load-${arrival.load?.toLowerCase() ?? "unknown"}`}>
+                          <strong>{arrival.display}</strong>
+                          <span>{arrival.load_label}</span>
+                          <small>{arrival.vehicle_type}{arrival.wheelchair_accessible ? " · WAB" : ""}</small>
+                        </div>
+                      )) : <span className="no-arrival">No estimate available</span>}
+                    </div>
+                  </article>
+                ))}
+                {!arrivalBoard.services.length && <p className="no-arrival">No buses are currently reported at this stop.</p>}
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       <section

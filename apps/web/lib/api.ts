@@ -29,6 +29,66 @@ export type LtaStatus = {
   next_step: string;
 };
 
+export type TransportNetworkSummary = {
+  source: string;
+  source_url: string;
+  ingested_at: string;
+  bus_stop_count: number;
+  service_count: number;
+  route_pattern_count: number;
+  operator_counts: Record<string, number>;
+  quality: {
+    status: string;
+    received_records: number;
+    valid_records: number;
+    completeness_percent: number;
+    issues: string[];
+  };
+};
+
+export type BusStop = {
+  code: string;
+  road_name: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+};
+
+export type BusStopSearchResult = {
+  source: string;
+  query: string;
+  ingested_at: string;
+  stops: BusStop[];
+};
+
+export type BusArrivalBoard = {
+  source: string;
+  source_url: string;
+  fetched_at: string;
+  bus_stop: BusStop;
+  services: Array<{
+    service_no: string;
+    operator: string;
+    arrivals: Array<{
+      estimated_arrival: string;
+      minutes: number;
+      display: string;
+      load: string | null;
+      load_label: string;
+      wheelchair_accessible: boolean;
+      monitored: boolean;
+      vehicle_type: string;
+    }>;
+  }>;
+  quality: {
+    status: string;
+    received_records: number;
+    valid_records: number;
+    completeness_percent: number;
+    issues: string[];
+  };
+};
+
 export type AirQualitySnapshot = {
   source: string;
   source_urls: string[];
@@ -278,6 +338,22 @@ export async function getLtaStatus(): Promise<LtaStatus> {
     state: "planned",
     next_step: "Transport feeds join in Milestone 2",
   };
+}
+
+export async function getTransportNetwork(): Promise<TransportNetworkSummary | null> {
+  return request<TransportNetworkSummary>("/api/v1/transport/network");
+}
+
+export async function searchBusStops(query: string): Promise<BusStopSearchResult | null> {
+  return request<BusStopSearchResult>(
+    `/api/v1/transport/stops?query=${encodeURIComponent(query)}&limit=8`,
+  );
+}
+
+export async function getBusArrivals(busStopCode: string): Promise<BusArrivalBoard | null> {
+  return request<BusArrivalBoard>(
+    `/api/v1/transport/arrivals/${encodeURIComponent(busStopCode)}`,
+  );
 }
 
 export async function getAirQuality(): Promise<AirQualitySnapshot | null> {

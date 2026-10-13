@@ -13,9 +13,17 @@
 
 - Provider: Land Transport Authority
 - Authentication: account key required
-- Planned datasets: bus stops, bus routes, bus arrival, passenger volume, and
-  traffic speed bands where licence and retention conditions permit
-- Current use: configuration-readiness check only
+- Current datasets: bus stops, bus services, bus routes, and Bus Arrival v3
+- Current use: network summary, stop search, scheduled routes, and live
+  next-three-bus arrival boards
+- Quality checks: bounded 500-record pagination, schema validation, five-digit
+  stop codes, valid coordinates, arrival timestamps, and rejected-record reasons
+- Cache policy: ad-hoc stop/service/route metadata is cached for six hours;
+  live arrivals are requested on demand
+- Security: `AccountKey` is attached only by the FastAPI adapter and is never
+  returned to the browser or written to logs
+- Planned datasets: passenger volume and traffic speed bands where licence and
+  retention conditions permit
 
 ## NEA PSI and PM2.5 readings
 
@@ -33,8 +41,8 @@ PSI bands follow Singapore's official categories: Good (0-50), Moderate
 (above 300). Citizen guidance links to `haze.gov.sg`; FluxSG does not replace
 official health, school, workplace, or medical advice.
 
-Before persisting any LTA dataset, its current licence, rate limits, retention
-conditions, and attribution requirements will be recorded here.
+Before persisting any additional LTA dataset, its current licence, rate limits,
+retention conditions, and attribution requirements will be recorded here.
 
 ## Data governance
 

@@ -30,6 +30,10 @@ flowchart LR
   beats a transparent naive prediction on held-out time periods.
 - **Credentials stay server-side.** LTA keys are read from environment or a
   cloud secret manager and never sent to the browser.
+- **Static transport metadata is bounded and cached.** The LTA adapter follows
+  the provider's 500-record pagination contract, applies hard page limits, and
+  caches bus stops, services, and routes for six hours. Arrival boards remain
+  on-demand because their source refreshes every 20 seconds.
 - **Public preview has a credential-free fallback.** GitHub Pages cannot run a
   Python service, so the static dashboard reads only CORS-enabled,
   unauthenticated data.gov.sg feeds in the browser. Local Docker uses the same

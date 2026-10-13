@@ -14,11 +14,14 @@
 
 ## Milestone 2 - Reproducible ingestion
 
+- [x] Authenticated LTA DataMall client with bounded pagination and caching
+- [x] Normalised bus-stop, service, route, and live-arrival contracts
+- [x] Citizen stop search with crowding and accessibility indicators
+- [x] LTA adapter unit tests and live Docker verification
 - PostgreSQL and object-storage development services
 - Scheduled ingestion with idempotency and retry limits
 - Immutable raw records and rejected-record quarantine
 - OpenTelemetry traces, structured logs, and pipeline metrics
-- LTA bus-stop and route adapters after account-key configuration
 
 **Evidence:** replayable pipeline, failure injection, recovery runbook.
 

@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     data_gov_psi_url: str = "https://api-open.data.gov.sg/v2/real-time/api/psi"
     data_gov_pm25_url: str = "https://api-open.data.gov.sg/v2/real-time/api/pm25"
     lta_account_key: str | None = None
+    lta_base_url: str = "https://datamall2.mytransport.sg/ltaodataservice"
+    lta_cache_ttl_seconds: int = 21_600
     source_timeout_seconds: float = 8.0
 
     @field_validator("cors_origins", mode="before")

@@ -18,12 +18,14 @@ Docker operation and the upcoming persistence and analytics milestones.
 
 ## Current milestone
 
-Milestone 1 establishes a tested vertical slice:
+Milestone 2 extends the tested vertical slice with a secured LTA transport layer:
 
 - a FastAPI service that normalises the live NEA two-hour forecast;
 - a citizen-facing haze watch combining official PSI and PM2.5 feeds;
+- an authenticated LTA adapter covering all bus stops and active services;
+- searchable stop metadata and live next-three-bus arrival boards;
+- route lookup with scheduled first and last bus timings;
 - explicit freshness, completeness, and source-health signals;
-- an LTA DataMall readiness endpoint without exposing credentials;
 - a responsive Next.js operations dashboard;
 - containerised local development and automated CI checks.
 - public delivery through GitHub Pages.
@@ -57,6 +59,9 @@ docker compose up --build
 Open <http://localhost:3000>. API documentation is available at
 <http://localhost:8000/docs>.
 
+The secured local build activates the transport search. Try `01012` or
+`Raffles`, select a stop, and FluxSG will request the current LTA arrival board.
+
 ### Without Docker
 
 ```bash
@@ -77,7 +82,20 @@ pnpm dev
 
 Copy `.env.example` to `.env`. The weather vertical slice works without a
 credential. LTA DataMall integration requires a free `LTA_ACCOUNT_KEY` and is
-disabled until that variable is present.
+disabled until that variable is present. The key is consumed only by FastAPI;
+it is never included in the Next.js client bundle or API responses.
+
+## Transport API
+
+```text
+GET /api/v1/transport/network
+GET /api/v1/transport/stops?query=Raffles&limit=8
+GET /api/v1/transport/arrivals/01012
+GET /api/v1/transport/routes/10
+```
+
+Static network datasets are cached for six hours to avoid wasteful upstream
+requests. Live arrivals are fetched on demand from LTA DataMall.
 
 ## Quality commands
 
