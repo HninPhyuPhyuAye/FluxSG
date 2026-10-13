@@ -27,10 +27,10 @@
 
 ## Milestone 3 - Analytics warehouse
 
-- Bronze, silver, and gold data contracts
-- dbt staging, dimensional models, documentation, and lineage
-- Freshness, uniqueness, relationship, and domain tests
-- Analyst-ready views and three documented business questions
+- [x] Bronze, silver, and gold data contracts
+- [x] dbt staging, dimensional models, documentation, and lineage
+- [x] Freshness, uniqueness, relationship, and domain tests
+- [x] Analyst-ready views and three documented business questions
 
 **Evidence:** lineage graph, quality report, reproducible SQL analysis.
 

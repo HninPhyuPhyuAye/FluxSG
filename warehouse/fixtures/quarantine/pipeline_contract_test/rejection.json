@@ -1,0 +1,13 @@
+{
+  "dataset": "pipeline_contract_test",
+  "fingerprint": "fixture-contract-test",
+  "rejected_records": [
+    {
+      "source": "bus_stops",
+      "record": {
+        "raw": {"BusStopCode": null, "Description": "controlled failure"},
+        "reason": "BusStopCode is required"
+      }
+    }
+  ]
+}

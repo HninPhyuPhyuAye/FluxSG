@@ -1,0 +1,27 @@
+name: fluxsg_warehouse
+version: 1.0.0
+config-version: 2
+profile: fluxsg
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  fluxsg_warehouse:
+    staging:
+      +schema: silver
+      +materialized: view
+      +tags: ["silver"]
+    marts:
+      core:
+        +schema: gold
+        +materialized: table
+        +tags: ["gold", "core"]
+      analytics:
+        +schema: gold
+        +materialized: view
+        +tags: ["gold", "analytics"]

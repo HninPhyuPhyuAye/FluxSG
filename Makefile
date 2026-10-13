@@ -1,4 +1,4 @@
-.PHONY: install dev api web test check
+.PHONY: install dev api web test check warehouse warehouse-fixtures warehouse-docs
 
 install:
 	pnpm install
@@ -23,4 +23,13 @@ check:
 	pnpm lint
 	pnpm typecheck
 	pnpm build
+
+warehouse:
+	docker compose --profile warehouse run --build --rm warehouse
+
+warehouse-fixtures:
+	docker compose --profile warehouse run --build --rm warehouse bash -c "python tools/load_bronze.py --fixture-dir fixtures && dbt build --profiles-dir . && dbt source freshness --profiles-dir . && dbt docs generate --profiles-dir ."
+
+warehouse-docs:
+	docker compose --profile warehouse run --rm -p 127.0.0.1:8080:8080 warehouse dbt docs serve --profiles-dir . --host 0.0.0.0 --port 8080
 

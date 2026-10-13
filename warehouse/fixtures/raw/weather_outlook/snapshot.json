@@ -1,0 +1,21 @@
+{
+  "source": "data.gov.sg / NEA",
+  "source_url": "https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast",
+  "source_updated_at": "2026-10-13T15:00:00+08:00",
+  "ingested_at": "2026-10-13T07:00:05Z",
+  "valid_from": "2026-10-13T15:00:00+08:00",
+  "valid_to": "2026-10-13T17:00:00+08:00",
+  "forecasts": [
+    {"area": "City", "forecast": "Thundery Showers", "latitude": 1.292, "longitude": 103.851},
+    {"area": "Jurong", "forecast": "Cloudy", "latitude": 1.333, "longitude": 103.743},
+    {"area": "Tampines", "forecast": "Light Rain", "latitude": 1.353, "longitude": 103.945},
+    {"area": "Woodlands", "forecast": "Cloudy", "latitude": 1.438, "longitude": 103.789}
+  ],
+  "quality": {
+    "status": "healthy",
+    "received_records": 4,
+    "valid_records": 4,
+    "completeness_percent": 100,
+    "issues": []
+  }
+}

@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: mart_bus_stop_environment
+    description: Nearest official air-quality and weather context for each current Singapore bus stop.
+    columns:
+      - name: stop_environment_key
+        data_tests: [not_null, unique]
+      - name: stop_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_bus_stops'), field: stop_key}
+      - name: air_quality_level
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Good, Moderate, Unhealthy, Very Unhealthy, Hazardous]
+      - name: psi_24h
+        data_tests: [not_null]
+      - name: evaluated_at
+        data_tests: [not_null]
+
+  - name: mart_service_environment_risk
+    description: Service-level haze exposure derived from every stop in the current route pattern.
+    columns:
+      - name: service_key
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments: {to: ref('dim_bus_services'), field: service_key}
+      - name: stop_count
+        data_tests: [not_null]
+      - name: haze_alert
+        data_tests: [not_null]
+
+  - name: mart_ingestion_health
+    description: Dataset-level freshness, completeness, rejection, and quarantine summary.
+    columns:
+      - name: dataset
+        data_tests: [not_null, unique]
+      - name: health_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [healthy, degraded, stale]
+      - name: completeness_percent
+        data_tests: [not_null]

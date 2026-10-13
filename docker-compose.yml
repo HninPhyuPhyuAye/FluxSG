@@ -90,6 +90,29 @@ services:
       worker:
         condition: service_started
 
+  warehouse:
+    profiles: ["warehouse"]
+    build:
+      context: ./warehouse
+    environment:
+      DBT_HOST: postgres
+      DBT_PORT: 5432
+      DBT_USER: ${POSTGRES_USER:-fluxsg}
+      DBT_PASSWORD: ${POSTGRES_PASSWORD:-fluxsg-local}
+      DBT_DATABASE: ${POSTGRES_DB:-fluxsg}
+      OBJECT_STORE_ENDPOINT: ${OBJECT_STORE_ENDPOINT:-http://object-store:8333}
+      OBJECT_STORE_ACCESS_KEY: ${OBJECT_STORE_ACCESS_KEY:-fluxsg}
+      OBJECT_STORE_SECRET_KEY: ${OBJECT_STORE_SECRET_KEY:-fluxsg-local-secret}
+      OBJECT_STORE_BUCKET: ${OBJECT_STORE_BUCKET:-fluxsg-raw}
+      OBJECT_STORE_SECURE: ${OBJECT_STORE_SECURE:-false}
+    volumes:
+      - ./warehouse/target:/warehouse/target
+    depends_on:
+      postgres:
+        condition: service_healthy
+      object-store:
+        condition: service_started
+
   web:
     build:
       context: .

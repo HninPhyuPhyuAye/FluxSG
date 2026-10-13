@@ -7,11 +7,13 @@ flowchart LR
   LTA[LTA DataMall] --> I[Python ingestion]
   NEA[data.gov.sg weather] --> I
   I --> R[(Raw object storage)]
-  R --> V[Validation + quarantine]
-  V --> W[(PostgreSQL warehouse)]
-  W --> D[dbt transformations]
-  D --> F[Forecast training]
-  D --> A[FastAPI]
+  R --> B[(Bronze JSONB)]
+  I --> Q[Rejected-record quarantine]
+  Q --> B
+  B --> S[dbt silver views]
+  S --> G[dbt gold marts]
+  G --> F[Forecast training]
+  G --> A[FastAPI]
   F --> A
   A --> UI[Next.js dashboard]
   I --> O[Metrics + logs]
@@ -47,10 +49,13 @@ apps/web/          Next.js decision dashboard
 services/api/      FastAPI source and domain API
 services/api/app/pipelines/ scheduled snapshot ingestion and run ledger
 infra/             local PostgreSQL and S3-compatible storage configuration
+warehouse/         bronze loader, dbt models, tests, analyses, and fixtures
 docs/              product, data, architecture, and delivery evidence
 .github/workflows/ automated quality gates
 ```
 
-`warehouse/` will be introduced when the analytics milestone begins so the
-repository does not contain empty architecture theatre.
+The warehouse implements the medallion design end to end. Immutable source
+objects become queryable bronze JSONB records, silver views normalise provider
+payloads, and contracted gold models expose dimensional and analytical data.
+See [`WAREHOUSE.md`](WAREHOUSE.md) for lineage and reproducible evidence.
 

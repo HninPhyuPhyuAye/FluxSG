@@ -20,7 +20,7 @@ bundle.
 
 ## Current milestone
 
-Milestone 2 extends the tested vertical slice with a secured LTA transport layer:
+Milestone 3 turns the live ingestion system into a tested analytics warehouse:
 
 - a FastAPI service that normalises the live NEA two-hour forecast;
 - a citizen-facing haze watch combining official PSI and PM2.5 feeds;
@@ -30,6 +30,11 @@ Milestone 2 extends the tested vertical slice with a secured LTA transport layer
 - scheduled, idempotent source snapshots in S3-compatible object storage;
 - a PostgreSQL ingestion ledger with quality counts and object provenance;
 - rejected-record quarantine with deterministic replay and failure injection;
+- bronze JSONB source history and normalised silver dbt views;
+- contracted gold dimensions, route facts, and environmental risk marts;
+- 79 automated warehouse tests plus a source-freshness gate, covering keys,
+  relationships, and Singapore-specific data domains;
+- reproducible SQL answering route-level haze exposure and pipeline health;
 - Prometheus metrics, OpenTelemetry traces, and trace-correlated JSON logs;
 - explicit freshness, completeness, and source-health signals;
 - a responsive Next.js operations dashboard;
@@ -49,12 +54,14 @@ data.gov.sg / LTA DataMall
      FastAPI service       scheduled worker
            |                      |
   Next.js dashboard     PostgreSQL + object store
-                                  |
-                       Prometheus + Jaeger
+                                  +--> dbt bronze / silver / gold
+                                  |              |
+                       Prometheus + Jaeger   analytics marts
 ```
 
-The planned warehouse and forecasting layers are documented in
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+The architecture and warehouse lineage are documented in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
+[`docs/WAREHOUSE.md`](docs/WAREHOUSE.md).
 
 ## Run locally
 
@@ -119,7 +126,14 @@ requests. Live arrivals are fetched on demand from LTA DataMall.
 
 ```bash
 make check
+make warehouse
 ```
+
+`make warehouse` loads the immutable snapshots into PostgreSQL, builds every
+dbt model, runs the warehouse quality suite, checks source freshness, and
+generates interactive documentation. Use `make warehouse-fixtures` for the
+credential-free deterministic dataset and `make warehouse-docs` to open the
+lineage site at <http://localhost:8080>.
 
 ## Delivery roadmap
 
@@ -135,6 +149,9 @@ documented in [`docs/INGESTION.md`](docs/INGESTION.md).
 The observability queries and recovery drill are documented in
 [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) and
 [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+
+The warehouse contracts, quality report, lineage, and three reproducible
+business analyses are documented in [`docs/WAREHOUSE.md`](docs/WAREHOUSE.md).
 
 ## Responsible use
 

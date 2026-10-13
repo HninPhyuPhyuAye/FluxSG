@@ -1,0 +1,89 @@
+version: 2
+
+models:
+  - name: stg_snapshots
+    description: Silver quality and provenance metadata for every immutable bronze snapshot.
+    columns:
+      - name: snapshot_id
+        data_tests: [not_null]
+      - name: dataset
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [weather_outlook, air_quality, lta_transport_network]
+      - name: object_key
+        data_tests: [not_null, unique]
+      - name: completeness_percent
+        description: Valid rows divided by received rows, expressed as a percentage.
+
+  - name: stg_quarantine_records
+    description: Silver metadata for rejected rows; never referenced by trusted marts.
+    columns:
+      - name: quarantine_id
+        data_tests: [not_null, unique]
+      - name: rejection_reason
+        data_tests: [not_null]
+
+  - name: stg_weather_forecasts
+    description: One validated NEA forecast area per source snapshot.
+    columns:
+      - name: weather_observation_key
+        data_tests: [not_null, unique]
+      - name: area
+        data_tests: [not_null]
+      - name: forecast
+        data_tests: [not_null]
+
+  - name: stg_air_quality_regions
+    description: One validated NEA air-quality region per observation time.
+    columns:
+      - name: air_observation_key
+        data_tests: [not_null, unique]
+      - name: region
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [north, south, east, west, central]
+      - name: level
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [Good, Moderate, Unhealthy, Very Unhealthy, Hazardous]
+
+  - name: stg_bus_stops
+    description: Historical versions of validated LTA bus stops.
+    columns:
+      - name: bus_stop_version_key
+        data_tests: [not_null, unique]
+      - name: bus_stop_code
+        data_tests: [not_null]
+
+  - name: stg_bus_services
+    description: Historical versions of validated LTA bus services and directions.
+    columns:
+      - name: bus_service_version_key
+        data_tests: [not_null, unique]
+      - name: direction
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+                quote: false
+
+  - name: stg_bus_routes
+    description: Historical route-stop sequences from LTA DataMall.
+    columns:
+      - name: route_stop_version_key
+        data_tests: [not_null, unique]
+      - name: bus_stop_code
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_bus_stops')
+                field: bus_stop_code
+      - name: stop_sequence
+        data_tests: [not_null]

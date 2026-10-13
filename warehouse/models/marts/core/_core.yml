@@ -1,0 +1,119 @@
+version: 2
+
+models:
+  - name: dim_bus_stops
+    description: Gold current-state bus-stop dimension with stable surrogate keys.
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: stop_key
+        data_type: text
+        data_tests: [not_null, unique]
+      - name: bus_stop_code
+        data_type: text
+        data_tests: [not_null, unique]
+      - name: road_name
+        data_type: text
+      - name: description
+        data_type: text
+      - name: latitude
+        data_type: double precision
+        data_tests: [not_null]
+      - name: longitude
+        data_type: double precision
+        data_tests: [not_null]
+      - name: current_snapshot_id
+        data_type: text
+        data_tests: [not_null]
+      - name: source_ingested_at
+        data_type: timestamp with time zone
+        data_tests: [not_null]
+
+  - name: dim_bus_services
+    description: Gold current-state service-direction dimension.
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: service_key
+        data_type: text
+        data_tests: [not_null, unique]
+      - name: service_no
+        data_type: text
+        data_tests: [not_null]
+      - name: direction
+        data_type: integer
+        data_tests: [not_null]
+      - name: operator
+        data_type: text
+        data_tests: [not_null]
+      - name: category
+        data_type: text
+      - name: origin_code
+        data_type: text
+      - name: destination_code
+        data_type: text
+      - name: loop_description
+        data_type: text
+      - name: am_peak_frequency
+        data_type: text
+      - name: am_offpeak_frequency
+        data_type: text
+      - name: pm_peak_frequency
+        data_type: text
+      - name: pm_offpeak_frequency
+        data_type: text
+      - name: current_snapshot_id
+        data_type: text
+        data_tests: [not_null]
+      - name: source_ingested_at
+        data_type: timestamp with time zone
+        data_tests: [not_null]
+
+  - name: fct_bus_route_stops
+    description: Gold fact table describing the ordered stop sequence of every current route.
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: route_stop_key
+        data_type: text
+        data_tests: [not_null, unique]
+      - name: service_key
+        data_type: text
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_bus_services'), field: service_key}
+      - name: stop_key
+        data_type: text
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_bus_stops'), field: stop_key}
+      - name: service_no
+        data_type: text
+      - name: direction
+        data_type: integer
+      - name: operator
+        data_type: text
+      - name: stop_sequence
+        data_type: integer
+      - name: bus_stop_code
+        data_type: text
+      - name: distance_km
+        data_type: numeric(8,2)
+      - name: weekday_first_bus
+        data_type: text
+      - name: weekday_last_bus
+        data_type: text
+      - name: saturday_first_bus
+        data_type: text
+      - name: saturday_last_bus
+        data_type: text
+      - name: sunday_first_bus
+        data_type: text
+      - name: sunday_last_bus
+        data_type: text
+      - name: current_snapshot_id
+        data_type: text
+      - name: source_ingested_at
+        data_type: timestamp with time zone

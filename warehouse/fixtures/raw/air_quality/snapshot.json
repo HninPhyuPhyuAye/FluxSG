@@ -1,0 +1,31 @@
+{
+  "source": "data.gov.sg / NEA",
+  "source_urls": ["https://api-open.data.gov.sg/v2/real-time/api/psi"],
+  "observed_at": "2026-10-13T15:00:00+08:00",
+  "updated_at": "2026-10-13T15:00:55+08:00",
+  "ingested_at": "2026-10-13T07:01:00Z",
+  "national_psi": 172,
+  "national_level": "Unhealthy",
+  "haze_alert": true,
+  "regions": [
+    {"region": "central", "latitude": 1.35735, "longitude": 103.82, "psi_24h": 121, "pm25_24h": 91, "pm25_1h": 88, "level": "Unhealthy"},
+    {"region": "west", "latitude": 1.35735, "longitude": 103.7, "psi_24h": 172, "pm25_24h": 123, "pm25_1h": 119, "level": "Unhealthy"},
+    {"region": "east", "latitude": 1.35735, "longitude": 103.94, "psi_24h": 115, "pm25_24h": 84, "pm25_1h": 79, "level": "Unhealthy"},
+    {"region": "north", "latitude": 1.41803, "longitude": 103.82, "psi_24h": 108, "pm25_24h": 74, "pm25_1h": 68, "level": "Unhealthy"},
+    {"region": "south", "latitude": 1.29587, "longitude": 103.82, "psi_24h": 101, "pm25_24h": 69, "pm25_1h": 63, "level": "Unhealthy"}
+  ],
+  "guidance": {
+    "level": "Unhealthy",
+    "general_population": "Reduce prolonged or strenuous outdoor activity.",
+    "sensitive_groups": "Minimise prolonged or strenuous outdoor activity.",
+    "source_url": "https://www.haze.gov.sg/",
+    "disclaimer": "Fixture data for repeatable warehouse testing."
+  },
+  "quality": {
+    "status": "healthy",
+    "received_records": 5,
+    "valid_records": 5,
+    "completeness_percent": 100,
+    "issues": []
+  }
+}

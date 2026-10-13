@@ -1,0 +1,32 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: Immutable JSON snapshots and isolated rejected rows loaded from FluxSG object storage.
+    schema: bronze
+    tables:
+      - name: raw_snapshots
+        description: One immutable source snapshot per dataset and content fingerprint.
+        config:
+          loaded_at_field: loaded_at
+          freshness:
+            warn_after: {count: 2, period: hour}
+            error_after: {count: 24, period: hour}
+        columns:
+          - name: snapshot_id
+            data_tests: [not_null]
+          - name: dataset
+            data_tests: [not_null]
+          - name: object_key
+            data_tests: [not_null, unique]
+          - name: payload
+            data_tests: [not_null]
+      - name: quarantine_records
+        description: Rejected source records kept outside all trusted analytical models.
+        columns:
+          - name: quarantine_id
+            data_tests: [not_null, unique]
+          - name: dataset
+            data_tests: [not_null]
+          - name: record
+            data_tests: [not_null]

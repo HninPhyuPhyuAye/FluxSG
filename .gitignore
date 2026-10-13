@@ -18,4 +18,8 @@ __pycache__/
 *.db
 data/raw/
 data/processed/
+warehouse/target/
+warehouse/logs/
+warehouse/dbt_packages/
+warehouse/.user.yml
 
