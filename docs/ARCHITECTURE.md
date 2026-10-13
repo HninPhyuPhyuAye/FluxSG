@@ -45,10 +45,12 @@ flowchart LR
 ```text
 apps/web/          Next.js decision dashboard
 services/api/      FastAPI source and domain API
+services/api/app/pipelines/ scheduled snapshot ingestion and run ledger
+infra/             local PostgreSQL and S3-compatible storage configuration
 docs/              product, data, architecture, and delivery evidence
 .github/workflows/ automated quality gates
 ```
 
-`pipelines/`, `warehouse/`, and `infra/` will be introduced only when their
-milestones begin so the repository does not contain empty architecture theatre.
+`warehouse/` will be introduced when the analytics milestone begins so the
+repository does not contain empty architecture theatre.
 

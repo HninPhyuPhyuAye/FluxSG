@@ -38,6 +38,24 @@ async def test_lta_is_safe_when_key_is_missing() -> None:
     assert transport_response.json()["detail"] == "LTA DataMall integration is not configured"
 
 
+@pytest.mark.asyncio
+async def test_pipeline_status_is_safe_when_storage_is_not_configured() -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(database_url=None)
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get("/api/v1/pipeline/status")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "configured": False,
+        "state": "not_configured",
+        "latest_runs": [],
+    }
+
+
 def test_cors_origins_accept_compose_environment_format(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 

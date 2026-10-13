@@ -24,6 +24,14 @@ class Settings(BaseSettings):
     lta_base_url: str = "https://datamall2.mytransport.sg/ltaodataservice"
     lta_cache_ttl_seconds: int = 21_600
     source_timeout_seconds: float = 8.0
+    database_url: str | None = None
+    object_store_endpoint: str | None = None
+    object_store_access_key: str | None = None
+    object_store_secret_key: str | None = None
+    object_store_bucket: str = "fluxsg-raw"
+    object_store_secure: bool = False
+    ingestion_interval_seconds: int = 900
+    ingestion_max_attempts: int = 3
 
     @field_validator("cors_origins", mode="before")
     @classmethod

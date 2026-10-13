@@ -1,17 +1,69 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fluxsg}
+      POSTGRES_USER: ${POSTGRES_USER:-fluxsg}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fluxsg-local}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/001-ingestion.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  object-store:
+    image: chrislusf/seaweedfs:4.47
+    command: >-
+      server -s3 -dir=/data -ip=object-store -ip.bind=0.0.0.0 -volume.max=0
+      -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - object-store-data:/data
+      - ./infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+
   api:
     build:
       context: ./services/api
     environment:
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       LTA_ACCOUNT_KEY: ${LTA_ACCOUNT_KEY:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://fluxsg:fluxsg-local@postgres:5432/fluxsg}
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 3s
       retries: 5
+
+  worker:
+    build:
+      context: ./services/api
+    command: ["python", "-m", "app.pipelines.worker"]
+    environment:
+      LTA_ACCOUNT_KEY: ${LTA_ACCOUNT_KEY:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://fluxsg:fluxsg-local@postgres:5432/fluxsg}
+      OBJECT_STORE_ENDPOINT: ${OBJECT_STORE_ENDPOINT:-http://object-store:8333}
+      OBJECT_STORE_ACCESS_KEY: ${OBJECT_STORE_ACCESS_KEY:-fluxsg}
+      OBJECT_STORE_SECRET_KEY: ${OBJECT_STORE_SECRET_KEY:-fluxsg-local-secret}
+      OBJECT_STORE_BUCKET: ${OBJECT_STORE_BUCKET:-fluxsg-raw}
+      OBJECT_STORE_SECURE: ${OBJECT_STORE_SECURE:-false}
+      INGESTION_INTERVAL_SECONDS: ${INGESTION_INTERVAL_SECONDS:-900}
+      INGESTION_MAX_ATTEMPTS: ${INGESTION_MAX_ATTEMPTS:-3}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      object-store:
+        condition: service_started
 
   web:
     build:
@@ -31,4 +83,8 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+
+volumes:
+  postgres-data:
+  object-store-data:
 

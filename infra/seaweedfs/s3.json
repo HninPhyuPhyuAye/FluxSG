@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "fluxsg-local-worker",
+      "credentials": [
+        {
+          "accessKey": "fluxsg",
+          "secretKey": "fluxsg-local-secret"
+        }
+      ],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    }
+  ]
+}

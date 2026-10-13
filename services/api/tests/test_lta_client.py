@@ -148,3 +148,31 @@ async def test_route_adapter_filters_and_orders_the_requested_service() -> None:
     assert route.service_no == "10"
     assert [stop.stop_sequence for stop in route.stops] == [1, 2]
     assert route.stops[0].weekday_first_bus == "0600"
+
+
+@pytest.mark.asyncio
+async def test_network_snapshot_preserves_source_records_and_rejections() -> None:
+    invalid_stop = {**bus_stop("99999"), "Latitude": "not-a-coordinate"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/BusStops"):
+            return httpx.Response(200, json={"value": [bus_stop(), invalid_stop]})
+        if request.url.path.endswith("/BusServices"):
+            return httpx.Response(200, json={"value": [bus_service()]})
+        if request.url.path.endswith("/BusRoutes"):
+            return httpx.Response(200, json={"value": [route_stop()]})
+        raise AssertionError(f"Unexpected request: {request.url}")
+
+    client = LtaDataMallClient(
+        account_key="test-key",
+        base_url="https://example.test/ltaodataservice",
+        transport=httpx.MockTransport(handler),
+    )
+
+    snapshot = await client.fetch_network_snapshot()
+
+    assert snapshot["quality"]["received_records"] == 4
+    assert snapshot["quality"]["valid_records"] == 3
+    assert snapshot["quality"]["rejected_records"] == 1
+    assert snapshot["datasets"]["bus_stops"]["records"][1] == invalid_stop
+    assert snapshot["datasets"]["bus_stops"]["rejected_records"] == [invalid_stop]

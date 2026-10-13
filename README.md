@@ -27,6 +27,8 @@ Milestone 2 extends the tested vertical slice with a secured LTA transport layer
 - an authenticated LTA adapter covering all bus stops and active services;
 - searchable stop metadata and live next-three-bus arrival boards;
 - route lookup with scheduled first and last bus timings;
+- scheduled, idempotent source snapshots in S3-compatible object storage;
+- a PostgreSQL ingestion ledger with quality counts and object provenance;
 - explicit freshness, completeness, and source-health signals;
 - a responsive Next.js operations dashboard;
 - containerised local development and automated CI checks.
@@ -60,6 +62,11 @@ docker compose up --build
 
 Open <http://localhost:3000>. API documentation is available at
 <http://localhost:8000/docs>.
+
+The ingestion ledger is available at
+<http://localhost:8000/api/v1/pipeline/status>. PostgreSQL and the local
+S3-compatible object store are started automatically with the API, worker, and
+web dashboard.
 
 The secured local build activates the transport search. Try `01012` or
 `Raffles`, select a stop, and FluxSG will request the current LTA arrival board.
@@ -112,6 +119,9 @@ evidence produced by each phase.
 
 Deployment architecture and secret-handling instructions are documented in
 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+The snapshot lifecycle, idempotency contract, and local inspection commands are
+documented in [`docs/INGESTION.md`](docs/INGESTION.md).
 
 ## Responsible use
 

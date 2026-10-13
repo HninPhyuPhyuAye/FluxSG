@@ -80,6 +80,8 @@ class SourceBusArrival(BaseModel):
 @dataclass(frozen=True)
 class DatasetResult[RecordT: BaseModel]:
     records: list[RecordT]
+    raw_records: list[Any]
+    rejected_records: list[Any]
     received: int
     issues: list[str]
     ingested_at: datetime
@@ -161,23 +163,29 @@ class LtaDataMallClient:
         max_pages: int,
     ) -> DatasetResult[RecordT]:
         records: list[RecordT] = []
+        all_raw_records: list[Any] = []
+        rejected_records: list[Any] = []
         issues: list[str] = []
         received = 0
         for page in range(max_pages):
             payload = await self._request(path, {"$skip": page * self.page_size})
-            raw_records = payload.get("value")
-            if not isinstance(raw_records, list):
+            page_records = payload.get("value")
+            if not isinstance(page_records, list):
                 raise LtaSourceError(f"LTA {path} response did not contain a record list")
-            received += len(raw_records)
-            for index, raw_record in enumerate(raw_records):
+            received += len(page_records)
+            for index, raw_record in enumerate(page_records):
+                all_raw_records.append(raw_record)
                 try:
                     records.append(model.model_validate(raw_record))
                 except ValidationError:
+                    rejected_records.append(raw_record)
                     if len(issues) < 20:
                         issues.append(f"{path} page {page + 1}, row {index + 1}: invalid record")
-            if len(raw_records) < self.page_size:
+            if len(page_records) < self.page_size:
                 return DatasetResult(
                     records=records,
+                    raw_records=all_raw_records,
+                    rejected_records=rejected_records,
                     received=received,
                     issues=issues,
                     ingested_at=datetime.now(UTC),
@@ -216,6 +224,46 @@ class LtaDataMallClient:
             result = await self._fetch_all("BusRoutes", SourceBusRoute, max_pages=100)
             self._routes_cache = (time.monotonic(), result)
             return result
+
+    async def fetch_network_snapshot(self) -> dict[str, Any]:
+        """Return validated source records for immutable scheduled storage."""
+
+        stops, services, routes = await asyncio.gather(
+            self._load_stops(),
+            self._load_services(),
+            self._load_routes(),
+        )
+        datasets = {
+            "bus_stops": stops,
+            "bus_services": services,
+            "bus_routes": routes,
+        }
+        received = sum(result.received for result in datasets.values())
+        valid = sum(len(result.records) for result in datasets.values())
+        rejected = sum(len(result.rejected_records) for result in datasets.values())
+        completeness = round((valid / received * 100) if received else 0, 1)
+        return {
+            "source": "LTA DataMall",
+            "source_url": self.base_url,
+            "ingested_at": max(result.ingested_at for result in datasets.values()).isoformat(),
+            "datasets": {
+                name: {
+                    "received_records": result.received,
+                    "valid_records": len(result.records),
+                    "rejected_records": result.rejected_records,
+                    "records": result.raw_records,
+                    "issues": result.issues,
+                }
+                for name, result in datasets.items()
+            },
+            "quality": {
+                "status": "healthy" if received > 0 and rejected == 0 else "degraded",
+                "received_records": received,
+                "valid_records": valid,
+                "rejected_records": rejected,
+                "completeness_percent": completeness,
+            },
+        }
 
     @staticmethod
     def _stop(record: SourceBusStop) -> BusStop:
