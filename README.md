@@ -108,6 +108,9 @@ make check
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the milestone plan and recruiter
 evidence produced by each phase.
 
+Deployment architecture and secret-handling instructions are documented in
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
 ## Responsible use
 
 FluxSG is an independent portfolio project. It is not affiliated with or
