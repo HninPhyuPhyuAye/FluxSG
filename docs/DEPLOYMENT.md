@@ -7,6 +7,10 @@ The repository variable `FLUXSG_API_URL` is compiled into the browser bundle as
 `NEXT_PUBLIC_FLUXSG_API_URL`. When the variable is absent, the dashboard uses
 only the credential-free data.gov.sg fallback.
 
+- Dashboard: <https://hninphyuphyuaye.github.io/FluxSG/>
+- Production API: <https://fluxsg-api.vercel.app>
+- Interactive API docs: <https://fluxsg-api.vercel.app/docs>
+
 ## Secured API
 
 The FastAPI service is deployed from `services/api` as a Vercel Python Function.
@@ -30,11 +34,12 @@ https://hninphyuphyuaye.github.io
 The LTA key must be entered through Vercel's secret interface or CLI. It must
 never be copied into `vercel.json`, GitHub Actions variables, or source code.
 
-After deployment:
+Production verification checklist:
 
-1. Verify `/health`.
-2. Verify `/api/v1/integrations/lta` reports `configured: true`.
-3. Verify the network, stop-search, arrival, and route endpoints.
-4. Store the public API origin in the GitHub repository variable
-   `FLUXSG_API_URL`.
-5. Redeploy GitHub Pages and test the public browser flow.
+1. `/health` returns `status: ok`.
+2. `/api/v1/integrations/lta` reports `configured: true`.
+3. The network, stop-search, arrival, and route endpoints return validated LTA
+   data.
+4. The GitHub repository variable `FLUXSG_API_URL` points to the production API.
+5. The public dashboard can search for `Raffles` and load live arrivals for
+   Raffles Hotel (`02049`).

@@ -34,11 +34,11 @@ flowchart LR
   the provider's 500-record pagination contract, applies hard page limits, and
   caches bus stops, services, and routes for six hours. Arrival boards remain
   on-demand because their source refreshes every 20 seconds.
-- **Public preview has a credential-free fallback.** GitHub Pages cannot run a
-  Python service, so the static dashboard reads only CORS-enabled,
-  unauthenticated data.gov.sg feeds in the browser. Local Docker uses the same
-  UI through the FastAPI contract. Authenticated LTA traffic will remain
-  server-side once the production API is deployed.
+- **The public dashboard uses a secured API with a resilient fallback.** GitHub
+  Pages calls the Vercel-hosted FastAPI service for authenticated LTA traffic
+  and validated environmental data. The AccountKey remains server-side. If the
+  API is unavailable, the static dashboard falls back to CORS-enabled,
+  unauthenticated data.gov.sg feeds rather than exposing a credential.
 
 ## Repository layout
 

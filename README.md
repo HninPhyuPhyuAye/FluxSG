@@ -12,9 +12,11 @@ observable APIs, and an accessible decision interface.
 
 **[Open FluxSG](https://hninphyuphyuaye.github.io/FluxSG/)**
 
-The public dashboard refreshes official data.gov.sg readings in the browser
-every five minutes. The FastAPI service remains the validated backend for local
-Docker operation and the upcoming persistence and analytics milestones.
+The public dashboard combines official data.gov.sg environmental readings with
+live LTA DataMall transport intelligence. Its secured FastAPI backend is
+deployed at **[fluxsg-api.vercel.app](https://fluxsg-api.vercel.app/docs)**;
+the LTA AccountKey remains server-side and is never included in the browser
+bundle.
 
 ## Current milestone
 
