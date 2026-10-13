@@ -33,4 +33,3 @@ async def lta_status(settings: SettingsDependency) -> IntegrationStatus:
             else "Add LTA_ACCOUNT_KEY to the local environment"
         ),
     )
-

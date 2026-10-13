@@ -3,7 +3,6 @@ import hashlib
 import io
 import json
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from typing import Any, Protocol
 from urllib.parse import urlparse
 from uuid import UUID, uuid4
@@ -25,8 +24,10 @@ CREATE TABLE IF NOT EXISTS ingestion_runs (
     valid_records INTEGER NOT NULL DEFAULT 0,
     rejected_records INTEGER NOT NULL DEFAULT 0,
     object_key TEXT,
+    quarantine_key TEXT,
     error_message TEXT
 );
+ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS quarantine_key TEXT;
 CREATE INDEX IF NOT EXISTS ingestion_runs_dataset_started_idx
     ON ingestion_runs (dataset, started_at DESC);
 """
@@ -38,6 +39,7 @@ class IngestionOutcome:
     status: str
     idempotency_key: str
     object_key: str | None = None
+    quarantine_key: str | None = None
 
 
 class Ledger(Protocol):
@@ -50,13 +52,28 @@ class Ledger(Protocol):
         received: int,
         valid: int,
         rejected: int,
+        quarantine_key: str | None,
     ) -> None: ...
 
     async def fail(self, run_id: UUID, message: str) -> None: ...
 
+    async def refresh_storage_keys(
+        self,
+        idempotency_key: str,
+        object_key: str,
+        quarantine_key: str | None,
+    ) -> None: ...
+
 
 class SnapshotStore(Protocol):
     def put_json(self, dataset: str, fingerprint: str, payload: dict[str, Any]) -> str: ...
+
+    def put_quarantine(
+        self,
+        dataset: str,
+        fingerprint: str,
+        records: list[dict[str, Any]],
+    ) -> str: ...
 
 
 class PostgresIngestionLedger:
@@ -100,6 +117,7 @@ class PostgresIngestionLedger:
         received: int,
         valid: int,
         rejected: int,
+        quarantine_key: str | None,
     ) -> None:
         connection = await asyncpg.connect(self.database_url)
         try:
@@ -107,7 +125,8 @@ class PostgresIngestionLedger:
                 """
                 UPDATE ingestion_runs
                 SET status = 'completed', completed_at = NOW(), object_key = $2,
-                    received_records = $3, valid_records = $4, rejected_records = $5
+                    received_records = $3, valid_records = $4, rejected_records = $5,
+                    quarantine_key = $6
                 WHERE run_id = $1
                 """,
                 run_id,
@@ -115,6 +134,7 @@ class PostgresIngestionLedger:
                 received,
                 valid,
                 rejected,
+                quarantine_key,
             )
         finally:
             await connection.close()
@@ -134,13 +154,35 @@ class PostgresIngestionLedger:
         finally:
             await connection.close()
 
+    async def refresh_storage_keys(
+        self,
+        idempotency_key: str,
+        object_key: str,
+        quarantine_key: str | None,
+    ) -> None:
+        connection = await asyncpg.connect(self.database_url)
+        try:
+            await connection.execute(
+                """
+                UPDATE ingestion_runs
+                SET object_key = $2, quarantine_key = $3
+                WHERE idempotency_key = $1 AND status = 'completed'
+                """,
+                idempotency_key,
+                object_key,
+                quarantine_key,
+            )
+        finally:
+            await connection.close()
+
     async def latest(self, limit: int = 20) -> list[dict[str, Any]]:
         connection = await asyncpg.connect(self.database_url)
         try:
             rows = await connection.fetch(
                 """
                 SELECT run_id, dataset, status, started_at, completed_at,
-                       received_records, valid_records, rejected_records, object_key
+                       received_records, valid_records, rejected_records, object_key,
+                       quarantine_key
                 FROM ingestion_runs
                 ORDER BY started_at DESC
                 LIMIT $1
@@ -175,11 +217,24 @@ class S3SnapshotStore:
             self.client.make_bucket(self.bucket)
 
     def put_json(self, dataset: str, fingerprint: str, payload: dict[str, Any]) -> str:
-        ingested_at = datetime.now(UTC)
-        object_key = (
-            f"{dataset}/year={ingested_at:%Y}/month={ingested_at:%m}/"
-            f"day={ingested_at:%d}/{fingerprint}.json"
-        )
+        object_key = f"raw/{dataset}/sha256={fingerprint[:2]}/{fingerprint}.json"
+        return self._put_immutable(object_key, payload)
+
+    def put_quarantine(
+        self,
+        dataset: str,
+        fingerprint: str,
+        records: list[dict[str, Any]],
+    ) -> str:
+        object_key = f"quarantine/{dataset}/sha256={fingerprint[:2]}/{fingerprint}.json"
+        payload = {
+            "dataset": dataset,
+            "fingerprint": fingerprint,
+            "rejected_records": records,
+        }
+        return self._put_immutable(object_key, payload)
+
+    def _put_immutable(self, object_key: str, payload: dict[str, Any]) -> str:
         try:
             self.client.stat_object(self.bucket, object_key)
             return object_key
@@ -232,6 +287,26 @@ def record_counts(payload: dict[str, Any]) -> tuple[int, int, int]:
     return received, valid, rejected
 
 
+def extract_rejections(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return rejected source rows with enough context for safe replay and diagnosis."""
+    rejected: list[dict[str, Any]] = []
+    top_level = payload.get("rejected_records")
+    if isinstance(top_level, list):
+        rejected.extend({"source": "root", "record": record} for record in top_level)
+
+    datasets = payload.get("datasets")
+    if isinstance(datasets, dict):
+        for dataset_name, result in datasets.items():
+            if not isinstance(result, dict):
+                continue
+            records = result.get("rejected_records")
+            if isinstance(records, list):
+                rejected.extend(
+                    {"source": str(dataset_name), "record": record} for record in records
+                )
+    return rejected
+
+
 class SnapshotIngestion:
     def __init__(self, ledger: Ledger, store: SnapshotStore) -> None:
         self.ledger = ledger
@@ -246,6 +321,7 @@ class SnapshotIngestion:
         digest = fingerprint(payload)
         idempotency_key = f"{dataset}:{digest}"
         run_id = await self.ledger.begin(dataset, idempotency_key)
+        rejections = extract_rejections(payload)
         if run_id is None:
             object_key = await asyncio.to_thread(
                 self.store.put_json,
@@ -253,13 +329,53 @@ class SnapshotIngestion:
                 digest,
                 payload,
             )
-            return IngestionOutcome(dataset, "duplicate", idempotency_key, object_key)
+            quarantine_key = None
+            if rejections:
+                quarantine_key = await asyncio.to_thread(
+                    self.store.put_quarantine,
+                    dataset,
+                    digest,
+                    rejections,
+                )
+            await self.ledger.refresh_storage_keys(
+                idempotency_key,
+                object_key,
+                quarantine_key,
+            )
+            return IngestionOutcome(
+                dataset,
+                "duplicate",
+                idempotency_key,
+                object_key,
+                quarantine_key,
+            )
 
         try:
             object_key = await asyncio.to_thread(self.store.put_json, dataset, digest, payload)
             received, valid, rejected = record_counts(payload)
-            await self.ledger.complete(run_id, object_key, received, valid, rejected)
+            quarantine_key = None
+            if rejections:
+                quarantine_key = await asyncio.to_thread(
+                    self.store.put_quarantine,
+                    dataset,
+                    digest,
+                    rejections,
+                )
+            await self.ledger.complete(
+                run_id,
+                object_key,
+                received,
+                valid,
+                rejected,
+                quarantine_key,
+            )
         except Exception as exc:
             await self.ledger.fail(run_id, str(exc))
             raise
-        return IngestionOutcome(dataset, "completed", idempotency_key, object_key)
+        return IngestionOutcome(
+            dataset,
+            "completed",
+            idempotency_key,
+            object_key,
+            quarantine_key,
+        )

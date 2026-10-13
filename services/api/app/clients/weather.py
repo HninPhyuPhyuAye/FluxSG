@@ -108,4 +108,3 @@ class WeatherClient:
                 issues=issues,
             ),
         )
-

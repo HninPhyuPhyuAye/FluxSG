@@ -29,6 +29,8 @@ Milestone 2 extends the tested vertical slice with a secured LTA transport layer
 - route lookup with scheduled first and last bus timings;
 - scheduled, idempotent source snapshots in S3-compatible object storage;
 - a PostgreSQL ingestion ledger with quality counts and object provenance;
+- rejected-record quarantine with deterministic replay and failure injection;
+- Prometheus metrics, OpenTelemetry traces, and trace-correlated JSON logs;
 - explicit freshness, completeness, and source-health signals;
 - a responsive Next.js operations dashboard;
 - containerised local development and automated CI checks.
@@ -42,10 +44,13 @@ data.gov.sg / LTA DataMall
      source adapters
            |
   validation + contracts
-           |
-      FastAPI service
-           |
-  Next.js decision dashboard
+           +----------------------+
+           |                      |
+     FastAPI service       scheduled worker
+           |                      |
+  Next.js dashboard     PostgreSQL + object store
+                                  |
+                       Prometheus + Jaeger
 ```
 
 The planned warehouse and forecasting layers are documented in
@@ -67,6 +72,10 @@ The ingestion ledger is available at
 <http://localhost:8000/api/v1/pipeline/status>. PostgreSQL and the local
 S3-compatible object store are started automatically with the API, worker, and
 web dashboard.
+
+Operational views are available at <http://localhost:9090> (Prometheus) and
+<http://localhost:16686> (Jaeger). The worker metrics endpoint is
+<http://localhost:9100/metrics>.
 
 The secured local build activates the transport search. Try `01012` or
 `Raffles`, select a stop, and FluxSG will request the current LTA arrival board.
@@ -122,6 +131,10 @@ Deployment architecture and secret-handling instructions are documented in
 
 The snapshot lifecycle, idempotency contract, and local inspection commands are
 documented in [`docs/INGESTION.md`](docs/INGESTION.md).
+
+The observability queries and recovery drill are documented in
+[`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) and
+[`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
 ## Responsible use
 

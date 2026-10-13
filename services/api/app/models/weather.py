@@ -42,4 +42,3 @@ class IntegrationStatus(BaseModel):
     configured: bool
     state: str
     next_step: str
-

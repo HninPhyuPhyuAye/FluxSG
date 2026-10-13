@@ -20,8 +20,8 @@
 - [x] LTA adapter unit tests and live Docker verification
 - [x] PostgreSQL and object-storage development services
 - [x] Scheduled ingestion with idempotency and retry limits
-- Immutable raw records and rejected-record quarantine
-- OpenTelemetry traces, structured logs, and pipeline metrics
+- [x] Immutable raw records and rejected-record quarantine
+- [x] OpenTelemetry traces, structured logs, and pipeline metrics
 
 **Evidence:** replayable pipeline, failure injection, recovery runbook.
 

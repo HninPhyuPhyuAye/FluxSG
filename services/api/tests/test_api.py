@@ -17,6 +17,18 @@ async def test_health() -> None:
 
 
 @pytest.mark.asyncio
+async def test_prometheus_metrics_are_exposed() -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        await client.get("/health")
+        response = await client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "fluxsg_http_requests_total" in response.text
+    assert "fluxsg_http_request_duration_seconds" in response.text
+
+
+@pytest.mark.asyncio
 async def test_lta_is_safe_when_key_is_missing() -> None:
     app.dependency_overrides[get_settings] = lambda: Settings(lta_account_key=None)
     try:
@@ -65,5 +77,3 @@ def test_cors_origins_accept_compose_environment_format(monkeypatch: pytest.Monk
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
-
-

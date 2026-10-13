@@ -9,8 +9,11 @@ CREATE TABLE IF NOT EXISTS ingestion_runs (
     valid_records INTEGER NOT NULL DEFAULT 0,
     rejected_records INTEGER NOT NULL DEFAULT 0,
     object_key TEXT,
+    quarantine_key TEXT,
     error_message TEXT
 );
+
+ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS quarantine_key TEXT;
 
 CREATE INDEX IF NOT EXISTS ingestion_runs_dataset_started_idx
     ON ingestion_runs (dataset, started_at DESC);

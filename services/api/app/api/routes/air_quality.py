@@ -30,4 +30,3 @@ async def current_air_quality(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Live air-quality data is temporarily unavailable",
         ) from exc
-

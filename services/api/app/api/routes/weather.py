@@ -30,4 +30,3 @@ async def weather_outlook(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Live weather data is temporarily unavailable",
         ) from exc
-

@@ -41,4 +41,3 @@ class AirQualitySnapshot(BaseModel):
     regions: list[RegionAirQuality]
     guidance: HealthGuidance
     quality: QualitySummary
-

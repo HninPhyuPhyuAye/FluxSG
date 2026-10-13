@@ -61,4 +61,3 @@ async def test_rejects_malformed_source_payload(monkeypatch: pytest.MonkeyPatch)
 
     with pytest.raises(WeatherSourceError):
         await WeatherClient("https://example.test/weather").fetch()
-

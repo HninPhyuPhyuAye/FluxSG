@@ -16,6 +16,7 @@ class PipelineRun(BaseModel):
     valid_records: int = Field(ge=0)
     rejected_records: int = Field(ge=0)
     object_key: str | None
+    quarantine_key: str | None
 
 
 class PipelineStatus(BaseModel):

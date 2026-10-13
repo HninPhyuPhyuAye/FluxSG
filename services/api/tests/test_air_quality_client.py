@@ -42,9 +42,17 @@ PM25_PAYLOAD = {
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    [(0, "Good"), (50, "Good"), (51, "Moderate"), (100, "Moderate"),
-     (101, "Unhealthy"), (200, "Unhealthy"), (201, "Very Unhealthy"),
-     (300, "Very Unhealthy"), (301, "Hazardous")],
+    [
+        (0, "Good"),
+        (50, "Good"),
+        (51, "Moderate"),
+        (100, "Moderate"),
+        (101, "Unhealthy"),
+        (200, "Unhealthy"),
+        (201, "Very Unhealthy"),
+        (300, "Very Unhealthy"),
+        (301, "Hazardous"),
+    ],
 )
 def test_psi_level_boundaries(value: int, expected: str) -> None:
     assert psi_level(value) == expected
@@ -98,7 +106,4 @@ async def test_rejects_air_quality_without_complete_regions(
     monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
 
     with pytest.raises(AirQualitySourceError):
-        await AirQualityClient(
-            "https://example.test/psi", "https://example.test/pm25"
-        ).fetch()
-
+        await AirQualityClient("https://example.test/psi", "https://example.test/pm25").fetch()

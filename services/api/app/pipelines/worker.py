@@ -3,12 +3,19 @@ import asyncio
 import json
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from time import monotonic
 from typing import Any
+
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
+from prometheus_client import start_http_server
 
 from app.clients.air_quality import AirQualityClient
 from app.clients.lta import LtaDataMallClient
 from app.clients.weather import WeatherClient
 from app.core.config import Settings, get_settings
+from app.core.metrics import record_ingestion
+from app.core.observability import configure_tracing, current_trace_fields
 from app.pipelines.snapshot import (
     PostgresIngestionLedger,
     S3SnapshotStore,
@@ -81,21 +88,56 @@ async def run_cycle(settings: Settings, ingestion: SnapshotIngestion) -> None:
         jobs.append(("lta_transport_network", lta.fetch_network_snapshot))
 
     for dataset, fetch in jobs:
-        try:
-            value = await with_retries(fetch, max_attempts=settings.ingestion_max_attempts)
-            outcome = await ingestion.ingest(dataset, value)
-            log(
-                "ingestion_finished",
-                dataset=dataset,
-                status=outcome.status,
-                object_key=outcome.object_key,
-            )
-        except Exception as exc:
-            log("ingestion_failed", dataset=dataset, error=str(exc))
+        started = monotonic()
+        tracer = trace.get_tracer("fluxsg.ingestion")
+        with tracer.start_as_current_span("ingest.dataset") as span:
+            span.set_attribute("fluxsg.dataset", dataset)
+            try:
+                value = await with_retries(fetch, max_attempts=settings.ingestion_max_attempts)
+                outcome = await ingestion.ingest(dataset, value)
+                payload = value.model_dump(mode="json") if hasattr(value, "model_dump") else value
+                quality = payload.get("quality", {}) if isinstance(payload, dict) else {}
+                received = int(quality.get("received_records", 0))
+                valid = int(quality.get("valid_records", 0))
+                rejected = int(quality.get("rejected_records", max(received - valid, 0)))
+                record_ingestion(
+                    dataset,
+                    outcome.status,
+                    monotonic() - started,
+                    received,
+                    valid,
+                    rejected,
+                )
+                span.set_attribute("fluxsg.ingestion.status", outcome.status)
+                span.set_attribute("fluxsg.records.rejected", rejected)
+                log(
+                    "ingestion_finished",
+                    dataset=dataset,
+                    status=outcome.status,
+                    object_key=outcome.object_key,
+                    quarantine_key=outcome.quarantine_key,
+                    duration_seconds=round(monotonic() - started, 3),
+                    **current_trace_fields(),
+                )
+            except Exception as exc:
+                record_ingestion(dataset, "failed", monotonic() - started)
+                span.record_exception(exc)
+                span.set_status(Status(StatusCode.ERROR, str(exc)))
+                log(
+                    "ingestion_failed",
+                    dataset=dataset,
+                    error=str(exc),
+                    duration_seconds=round(monotonic() - started, 3),
+                    **current_trace_fields(),
+                )
 
 
 async def main(once: bool = False) -> None:
     settings = get_settings()
+    configure_tracing("fluxsg-worker", settings.otel_exporter_otlp_endpoint)
+    if not once:
+        start_http_server(settings.metrics_port)
+        log("metrics_server_started", port=settings.metrics_port)
     database_url, endpoint, access_key, secret_key = require_pipeline_settings(settings)
     ledger = PostgresIngestionLedger(database_url)
     store = S3SnapshotStore(

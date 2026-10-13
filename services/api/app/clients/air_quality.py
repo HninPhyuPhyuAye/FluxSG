@@ -187,4 +187,3 @@ class AirQualityClient:
                 issues=issues,
             ),
         )
-
