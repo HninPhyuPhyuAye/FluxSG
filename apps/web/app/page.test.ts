@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { enforceForecastFreshness, psiLevel } from "../lib/api";
+import { enforceForecastFreshness, psiLevel, watchedRegionAlert } from "../lib/api";
 import type { ForecastSnapshot } from "../lib/api";
 
 describe("FluxSG dashboard", () => {
@@ -96,5 +96,18 @@ describe("FluxSG dashboard", () => {
     expect(guarded.status).toBe("withheld");
     expect(guarded.checks.source_fresh).toBe(false);
     expect(guarded.reason).toContain("expired");
+  });
+
+  it("triggers only the saved regional PSI threshold", () => {
+    const snapshot = {
+      regions: [
+        { region: "west", psi_24h: 120 },
+        { region: "east", psi_24h: 80 },
+      ],
+    } as unknown as import("../lib/api").AirQualitySnapshot;
+
+    expect(watchedRegionAlert(snapshot, "west", 101)?.psi_24h).toBe(120);
+    expect(watchedRegionAlert(snapshot, "east", 101)).toBeNull();
+    expect(watchedRegionAlert(snapshot, "central", 51)).toBeNull();
   });
 });

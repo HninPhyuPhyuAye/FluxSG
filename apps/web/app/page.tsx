@@ -3,11 +3,13 @@
 import {
   getAirQuality,
   getBusArrivals,
+  getCommuteIntelligence,
   getForecast,
   getLtaStatus,
   getTransportNetwork,
   getWeather,
   searchBusStops,
+  watchedRegionAlert,
 } from "@/lib/api";
 import { useEffect, useState } from "react";
 import type {
@@ -17,6 +19,7 @@ import type {
   ForecastSnapshot,
   LtaStatus,
   TransportNetworkSummary,
+  StopExposureAssessment,
   WeatherOutlook,
 } from "@/lib/api";
 
@@ -41,6 +44,10 @@ export default function Home() {
   const [stopQuery, setStopQuery] = useState("");
   const [stopResults, setStopResults] = useState<BusStop[]>([]);
   const [arrivalBoard, setArrivalBoard] = useState<BusArrivalBoard | null>(null);
+  const [exposure, setExposure] = useState<StopExposureAssessment | null>(null);
+  const [watchedRegion, setWatchedRegion] = useState("central");
+  const [watchThreshold, setWatchThreshold] = useState(101);
+  const [notificationState, setNotificationState] = useState("Browser alerts off");
   const [transportMessage, setTransportMessage] = useState(
     "Search by stop code, road, or landmark.",
   );
@@ -71,6 +78,51 @@ export default function Home() {
       window.clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    const hydrateWatch = window.setTimeout(() => {
+      const stored = window.localStorage.getItem("fluxsg-region-watch");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as { region?: string; threshold?: number };
+          if (parsed.region) setWatchedRegion(parsed.region);
+          if (parsed.threshold && parsed.threshold >= 51 && parsed.threshold <= 301) {
+            setWatchThreshold(parsed.threshold);
+          }
+        } catch {
+          window.localStorage.removeItem("fluxsg-region-watch");
+        }
+      }
+      if ("Notification" in window && Notification.permission === "granted") {
+        setNotificationState("Browser alerts enabled");
+      }
+    }, 0);
+    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+      const basePath = process.env.NEXT_PUBLIC_FLUXSG_BASE_PATH ?? "";
+      void navigator.serviceWorker.register(`${basePath}/sw.js`).catch(() => undefined);
+    }
+    return () => window.clearTimeout(hydrateWatch);
+  }, []);
+
+  const activeWatchAlert = watchedRegionAlert(airQuality, watchedRegion, watchThreshold);
+
+  useEffect(() => {
+    if (!activeWatchAlert || !("Notification" in window) || Notification.permission !== "granted") {
+      return;
+    }
+    const alertKey = [
+      activeWatchAlert.region,
+      activeWatchAlert.psi_24h,
+      watchThreshold,
+      airQuality?.observed_at,
+    ].join(":");
+    if (window.sessionStorage.getItem("fluxsg-last-alert") === alertKey) return;
+    window.sessionStorage.setItem("fluxsg-last-alert", alertKey);
+    new Notification(`FluxSG · ${activeWatchAlert.region} PSI ${activeWatchAlert.psi_24h}`, {
+      body: `${activeWatchAlert.level}. Your saved threshold is ${watchThreshold}. Follow official haze guidance.`,
+      icon: `${process.env.NEXT_PUBLIC_FLUXSG_BASE_PATH ?? ""}/icon.svg`,
+    });
+  }, [activeWatchAlert, airQuality?.observed_at, watchThreshold]);
   const forecastGroups = Object.entries(
     (weather?.forecasts ?? []).reduce<Record<string, number>>((groups, item) => {
       groups[item.forecast] = (groups[item.forecast] ?? 0) + 1;
@@ -86,6 +138,7 @@ export default function Home() {
     if (query.length < 2 || !transportAvailable) return;
     setTransportBusy(true);
     setArrivalBoard(null);
+    setExposure(null);
     setTransportMessage("Searching the LTA stop directory…");
     const result = await searchBusStops(query);
     setStopResults(result?.stops ?? []);
@@ -100,14 +153,36 @@ export default function Home() {
   const selectStop = async (stop: BusStop) => {
     setTransportBusy(true);
     setTransportMessage(`Loading live arrivals for ${stop.description || stop.road_name}…`);
-    const board = await getBusArrivals(stop.code);
+    const intelligence = await getCommuteIntelligence(stop.code);
+    const board = intelligence?.arrivals ?? await getBusArrivals(stop.code);
     setArrivalBoard(board);
+    setExposure(intelligence?.exposure ?? null);
     setTransportMessage(
       board
         ? `Updated ${formatTime(board.fetched_at)} from LTA DataMall`
         : "Live arrivals are temporarily unavailable.",
     );
     setTransportBusy(false);
+  };
+
+  const saveWatch = (region: string, threshold = watchThreshold) => {
+    setWatchedRegion(region);
+    setWatchThreshold(threshold);
+    window.localStorage.setItem(
+      "fluxsg-region-watch",
+      JSON.stringify({ region, threshold }),
+    );
+  };
+
+  const enableNotifications = async () => {
+    if (!("Notification" in window)) {
+      setNotificationState("Notifications unsupported");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotificationState(
+      permission === "granted" ? "Browser alerts enabled" : "Permission not granted",
+    );
   };
 
   return (
@@ -117,7 +192,7 @@ export default function Home() {
           <span className="brand-mark">F</span>
           <span>FluxSG</span>
         </a>
-        <span className="system-state"><i /> Milestone 05 · {feedState}</span>
+        <span className="system-state"><i /> Milestone 06 · {feedState}</span>
       </header>
 
       <section className="hero" id="top">
@@ -168,10 +243,10 @@ export default function Home() {
       <section className="transit-console" aria-labelledby="transit-title">
         <div className="transit-intro">
           <p className="eyebrow">Live LTA movement layer</p>
-          <h2 id="transit-title">Find a stop. Read the next three buses.</h2>
+          <h2 id="transit-title">Find a stop. Check the air before you wait.</h2>
           <p>
-            Search the official stop directory, then inspect live arrivals, crowding,
-            vehicle type, and wheelchair accessibility without exposing the AccountKey.
+            Join live arrivals with the nearest official regional air reading, then inspect
+            waiting time, crowding, accessibility, and an explainable exposure signal.
           </p>
           <div className="network-proof" aria-label="LTA network summary">
             <div><strong>{transport?.bus_stop_count.toLocaleString("en-SG") ?? "—"}</strong><span>bus stops</span></div>
@@ -217,8 +292,41 @@ export default function Home() {
             <div className="arrival-board">
               <div className="arrival-heading">
                 <div><span>{arrivalBoard.bus_stop.code}</span><strong>{arrivalBoard.bus_stop.description}</strong></div>
-                <button type="button" onClick={() => setArrivalBoard(null)}>Change stop</button>
+                <button type="button" onClick={() => { setArrivalBoard(null); setExposure(null); }}>Change stop</button>
               </div>
+              {exposure && (
+                <section className={`exposure-card band-${exposure.band.toLowerCase().replaceAll(" ", "-")}`} aria-label="Commute exposure signal">
+                  <div className="exposure-score">
+                    <span>Air-aware wait signal</span>
+                    <strong>{exposure.score}</strong>
+                    <em>{exposure.band}</em>
+                  </div>
+                  <div className="exposure-detail">
+                    <div className="exposure-heading">
+                      <div>
+                        <span>{exposure.region} region · PSI {exposure.psi_24h}</span>
+                        <strong>{exposure.guidance}</strong>
+                      </div>
+                      <a href={exposure.guidance_url} target="_blank" rel="noreferrer">Official advice ↗</a>
+                    </div>
+                    <div className="component-list">
+                      {([
+                        ["24h PSI", exposure.components.psi, 55],
+                        ["PM2.5 spike", exposure.components.pm25_spike, 30],
+                        ["Outdoor wait", exposure.components.outdoor_wait, 15],
+                      ] as const).map(([label, value, maximum]) => (
+                        <div key={label}>
+                          <span>{label}</span>
+                          <div><i style={{ width: `${Math.min(value / maximum * 100, 100)}%` }} /></div>
+                          <strong>{value}/{maximum}</strong>
+                        </div>
+                      ))}
+                    </div>
+                    <p>{exposure.explanation.join(" ")}</p>
+                    <small>{exposure.disclaimer}</small>
+                  </div>
+                </section>
+              )}
               <div className="service-list">
                 {arrivalBoard.services.map((service) => (
                   <article key={service.service_no}>
@@ -280,6 +388,57 @@ export default function Home() {
             <h2 id="regions-title">Regional air-quality check</h2>
           </div>
           <p>PSI uses a 24-hour average. PM2.5 1h shows the more immediate particle reading.</p>
+        </div>
+        <div className="citizen-watch">
+          <div className="sg-map" aria-label="Schematic map of Singapore regional PSI">
+            <span className="island-shape" aria-hidden="true" />
+            {(airQuality?.regions ?? []).map((region) => (
+              <button
+                type="button"
+                className={`map-region map-${region.region} ${watchedRegion === region.region ? "watched" : ""}`}
+                key={region.region}
+                onClick={() => saveWatch(region.region)}
+                aria-label={`Watch ${region.region}, PSI ${region.psi_24h}`}
+              >
+                <span>{region.region}</span>
+                <strong>{region.psi_24h}</strong>
+              </button>
+            ))}
+          </div>
+          <aside className="watch-panel">
+            <p className="eyebrow">Saved on this device</p>
+            <h3>Watch one region</h3>
+            <label>
+              Region
+              <select value={watchedRegion} onChange={(event) => saveWatch(event.target.value)}>
+                {(airQuality?.regions ?? []).map((region) => (
+                  <option value={region.region} key={region.region}>{region.region}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Alert at PSI
+              <select
+                value={watchThreshold}
+                onChange={(event) => saveWatch(watchedRegion, Number(event.target.value))}
+              >
+                <option value={51}>51 · Moderate</option>
+                <option value={101}>101 · Unhealthy</option>
+                <option value={201}>201 · Very unhealthy</option>
+                <option value={301}>301 · Hazardous</option>
+              </select>
+            </label>
+            <button type="button" onClick={() => void enableNotifications()}>{notificationState}</button>
+            {activeWatchAlert ? (
+              <div className="watch-alert" role="status">
+                <strong>Threshold reached</strong>
+                <span>{activeWatchAlert.region} is {activeWatchAlert.level} at PSI {activeWatchAlert.psi_24h}.</span>
+              </div>
+            ) : (
+              <p className="watch-clear">No saved threshold alert at the latest observation.</p>
+            )}
+            <small>Stored only in this browser. Alerts work while FluxSG is open.</small>
+          </aside>
         </div>
         <div className="region-grid">
           {(airQuality?.regions ?? []).map((region) => (

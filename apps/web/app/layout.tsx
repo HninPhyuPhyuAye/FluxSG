@@ -7,7 +7,17 @@ const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "FluxSG — Singapore movement intelligence",
-  description: "A trusted data platform for Singapore mobility operations.",
+  description: "Air-aware Singapore mobility, live arrivals, haze watch, and guarded forecasts.",
+  manifest: "./manifest.webmanifest",
+  icons: {
+    icon: "./icon.svg",
+    apple: "./icon.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "FluxSG",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

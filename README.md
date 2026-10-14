@@ -20,13 +20,19 @@ bundle.
 
 ## Current milestone
 
-Milestone 5 delivers the honestly evaluated haze model through an operational
-release system that is allowed to withhold unsafe forecasts:
+Milestone 6 turns the operational data platform into an air-aware citizen
+product while retaining the forecast release gate:
 
 - a FastAPI service that normalises the live NEA two-hour forecast;
 - a citizen-facing haze watch combining official PSI and PM2.5 feeds;
 - an authenticated LTA adapter covering all bus stops and active services;
 - searchable stop metadata and live next-three-bus arrival boards;
+- a joined commute endpoint that combines a stop's live arrivals with its
+  nearest official regional PSI and PM2.5 reading;
+- an explainable 0–100 commute exposure signal with disclosed components and
+  an explicit non-medical limitation;
+- a five-region Singapore schematic, device-local watchlist, threshold alerts,
+  and installable PWA shell;
 - route lookup with scheduled first and last bus timings;
 - scheduled, idempotent source snapshots in S3-compatible object storage;
 - a PostgreSQL ingestion ledger with quality counts and object provenance;
@@ -132,10 +138,15 @@ GET /api/v1/transport/network
 GET /api/v1/transport/stops?query=Raffles&limit=8
 GET /api/v1/transport/arrivals/01012
 GET /api/v1/transport/routes/10
+GET /api/v1/commute/stops/01012
 ```
 
 Static network datasets are cached for six hours to avoid wasteful upstream
 requests. Live arrivals are fetched on demand from LTA DataMall.
+
+The commute endpoint joins live arrivals and current regional air quality in a
+single browser request. Its bounded score, component weights, and limitations
+are documented in [`docs/COMMUTE_EXPOSURE.md`](docs/COMMUTE_EXPOSURE.md).
 
 ## Quality commands
 

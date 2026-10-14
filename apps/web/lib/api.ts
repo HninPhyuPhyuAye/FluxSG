@@ -89,6 +89,34 @@ export type BusArrivalBoard = {
   };
 };
 
+export type StopExposureAssessment = {
+  source: string[];
+  assessed_at: string;
+  air_observed_at: string;
+  region: string;
+  region_distance_km: number;
+  psi_24h: number;
+  pm25_1h: number;
+  next_bus_minutes: number | null;
+  services_reported: number;
+  score: number;
+  band: string;
+  components: {
+    psi: number;
+    pm25_spike: number;
+    outdoor_wait: number;
+  };
+  explanation: string[];
+  guidance: string;
+  guidance_url: string;
+  disclaimer: string;
+};
+
+export type CommuteIntelligence = {
+  arrivals: BusArrivalBoard;
+  exposure: StopExposureAssessment;
+};
+
 export type AirQualitySnapshot = {
   source: string;
   source_urls: string[];
@@ -402,9 +430,26 @@ export async function getBusArrivals(busStopCode: string): Promise<BusArrivalBoa
   );
 }
 
+export async function getCommuteIntelligence(
+  busStopCode: string,
+): Promise<CommuteIntelligence | null> {
+  return request<CommuteIntelligence>(
+    `/api/v1/commute/stops/${encodeURIComponent(busStopCode)}`,
+  );
+}
+
 export async function getAirQuality(): Promise<AirQualitySnapshot | null> {
   return (await request<AirQualitySnapshot>("/api/v1/air-quality/current"))
     ?? getOfficialAirQuality();
+}
+
+export function watchedRegionAlert(
+  snapshot: AirQualitySnapshot | null,
+  regionName: string,
+  threshold: number,
+): AirQualitySnapshot["regions"][number] | null {
+  const region = snapshot?.regions.find((item) => item.region === regionName);
+  return region && region.psi_24h >= threshold ? region : null;
 }
 
 export function enforceForecastFreshness(

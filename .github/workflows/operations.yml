@@ -27,5 +27,17 @@ jobs:
                 ((.observed_at | fromdateiso8601) > (now - 10800)) and
                 ((.expires_at | fromdateiso8601) > now)
               '
+      - name: Validate air-aware commute contract
+        run: |
+          curl --fail --show-error --silent --retry 3 \
+            https://fluxsg-api.vercel.app/api/v1/commute/stops/01012 \
+            | jq -e '
+                .arrivals.bus_stop.code == "01012" and
+                (.arrivals.services | type == "array") and
+                (.exposure.region | type == "string") and
+                (.exposure.score >= 0 and .exposure.score <= 100) and
+                (.exposure.components.psi >= 0) and
+                (.exposure.explanation | length == 3)
+              '
       - name: Check public dashboard
         run: curl --fail --show-error --silent --retry 3 --output /dev/null https://hninphyuphyuaye.github.io/FluxSG/

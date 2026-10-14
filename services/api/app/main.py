@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-from app.api.routes import air_quality, forecast, pipeline, system, transport, weather
+from app.api.routes import air_quality, commute, forecast, pipeline, system, transport, weather
 from app.core.config import get_settings
 from app.core.metrics import HTTP_DURATION, HTTP_REQUESTS
 from app.core.observability import configure_tracing
@@ -15,7 +15,7 @@ configure_tracing(settings.otel_service_name, settings.otel_exporter_otlp_endpoi
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.6.0",
+    version="0.7.0",
     summary="Trusted Singapore mobility and environmental data",
 )
 app.add_middleware(
@@ -48,5 +48,6 @@ app.include_router(weather.router)
 app.include_router(air_quality.router)
 app.include_router(forecast.router)
 app.include_router(transport.router)
+app.include_router(commute.router)
 app.include_router(pipeline.router)
 FastAPIInstrumentor.instrument_app(app, excluded_urls="/health,/metrics")

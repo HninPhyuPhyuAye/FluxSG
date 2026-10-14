@@ -62,6 +62,8 @@ The CI system includes:
 - weekly and push-triggered CodeQL for Python and JavaScript/TypeScript;
 - Python and production JavaScript dependency audits;
 - twice-hourly checks of API health, the forecast contract, and the dashboard;
+- a live joined-commute smoke check that validates score bounds, source region,
+  and the selected bus-stop contract;
 - 30-day retention of every forecast manifest, metrics report, and drift report.
 
 ## Operations

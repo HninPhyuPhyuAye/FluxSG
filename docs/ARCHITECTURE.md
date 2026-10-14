@@ -22,6 +22,9 @@ flowchart LR
   J --> A
   J --> UI
   A --> UI[Next.js dashboard]
+  LTA --> C[Commute intelligence service]
+  NEA --> C
+  C --> A
   I --> O[Metrics + logs]
   A --> O
 ```
@@ -56,6 +59,13 @@ flowchart LR
   and validated environmental data. The AccountKey remains server-side. If the
   API is unavailable, the static dashboard falls back to CORS-enabled,
   unauthenticated data.gov.sg feeds rather than exposing a credential.
+- **Cross-domain scoring happens behind one contract.** The commute endpoint
+  concurrently requests LTA arrivals and NEA air quality, maps a stop to the
+  nearest official reporting region, and returns the arrival board beside an
+  explainable bounded score. The browser never receives the LTA AccountKey.
+- **Citizen preferences remain local.** The watched region and PSI threshold
+  are stored in browser local storage. FluxSG has no notification account,
+  personal profile, or background tracking service.
 
 ## Repository layout
 

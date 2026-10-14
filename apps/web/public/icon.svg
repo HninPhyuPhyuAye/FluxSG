@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FluxSG">
+  <rect width="512" height="512" rx="144" fill="#111416"/>
+  <path d="M126 112h280v80H222v74h150v78H222v120h-96z" fill="#c8ff3d"/>
+  <circle cx="396" cy="396" r="42" fill="#f3f5ef"/>
+</svg>

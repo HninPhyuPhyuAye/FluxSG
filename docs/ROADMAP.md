@@ -54,3 +54,17 @@
 - [x] Load test and cost report
 
 **Evidence:** live system, operational runbook, performance and cost results.
+
+## Milestone 6 - Air-aware citizen experience
+
+- [x] Join live LTA arrivals with the nearest official regional air reading
+- [x] Publish an explainable, bounded commute exposure signal
+- [x] Add a five-region Singapore air-quality schematic
+- [x] Save a regional PSI watch and threshold locally on the citizen's device
+- [x] Offer user-initiated browser alerts while the dashboard is open
+- [x] Add an installable, offline-shell PWA manifest and service worker
+- [x] Extend API, browser, and outside-in production checks
+- [x] Document score components, limitations, and privacy boundaries
+
+**Evidence:** one-request cross-domain decision contract, live citizen workflow,
+transparent scoring, local-only preference storage, and deployment verification.
