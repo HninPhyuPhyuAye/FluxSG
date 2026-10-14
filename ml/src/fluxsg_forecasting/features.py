@@ -55,7 +55,9 @@ def normalise_history(history: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Historical data is missing columns: {sorted(missing)}")
     history = history.loc[history["region"].isin(REGIONS)].copy()
-    history["timestamp"] = pd.to_datetime(history["timestamp"], utc=True, errors="coerce")
+    history["timestamp"] = pd.to_datetime(
+        history["timestamp"], utc=True, errors="coerce", format="mixed"
+    )
     for column in POLLUTANT_COLUMNS:
         history[column] = pd.to_numeric(history[column], errors="coerce")
     history = history.dropna(subset=["timestamp", "region", PSI_COLUMN])

@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     data_gov_weather_url: str = "https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast"
     data_gov_psi_url: str = "https://api-open.data.gov.sg/v2/real-time/api/psi"
     data_gov_pm25_url: str = "https://api-open.data.gov.sg/v2/real-time/api/pm25"
+    forecast_manifest_url: str = (
+        "https://hninphyuphyuaye.github.io/FluxSG/data/forecast.json"
+    )
     lta_account_key: str | None = None
     lta_base_url: str = "https://datamall2.mytransport.sg/ltaodataservice"
     lta_cache_ttl_seconds: int = 21_600

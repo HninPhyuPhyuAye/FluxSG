@@ -99,3 +99,13 @@ training_reference.json drift-monitoring reference
 See [`MODEL_CARD.md`](MODEL_CARD.md) for measured results, limitations, and the
 release decision. The complete reference result is versioned as
 [`ml/reports/reference_metrics.json`](../ml/reports/reference_metrics.json).
+
+## Production publication
+
+`fluxsg-forecast fetch-live` obtains nine days of hourly regional PSI features.
+`fluxsg-forecast publish` loads the fitted model, measures live drift, evaluates
+freshness and release checks, and writes the public JSON contract. A withheld
+contract is a successful safety outcome rather than a pipeline failure.
+
+Run the same path locally with `make forecast-live`. The hourly production
+workflow and all guardrails are documented in [`PRODUCTION.md`](PRODUCTION.md).

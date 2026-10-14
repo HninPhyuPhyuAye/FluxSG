@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: FluxSG
+    orgId: 1
+    folder: FluxSG
+    type: file
+    disableDeletion: true
+    editable: false
+    options:
+      path: /var/lib/grafana/dashboards

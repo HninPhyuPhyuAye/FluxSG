@@ -17,7 +17,10 @@ flowchart LR
   F --> M[Backtests + promotion gate]
   M --> ART[Model + metrics + drift profile]
   G --> A[FastAPI]
-  ART -. production release .-> A
+  ART --> P[Freshness + drift release gate]
+  P --> J[Versioned forecast manifest]
+  J --> A
+  J --> UI
   A --> UI[Next.js dashboard]
   I --> O[Metrics + logs]
   A --> O
@@ -39,6 +42,9 @@ flowchart LR
 - **Offline promotion is not public deployment.** A model can pass its benchmark
   while remaining blocked from citizen use because of stale training data,
   distribution drift, weak uncertainty coverage, or safety review.
+- **The release decision is data.** Forecast values, expiry, drift, evaluation
+  evidence, and every blocking check travel in one versioned contract. Both the
+  API and browser independently withhold expired artifacts.
 - **Credentials stay server-side.** LTA keys are read from environment or a
   cloud secret manager and never sent to the browser.
 - **Static transport metadata is bounded and cached.** The LTA adapter follows

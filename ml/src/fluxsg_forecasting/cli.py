@@ -8,6 +8,7 @@ import pandas as pd
 from fluxsg_forecasting.drift import assess_drift
 from fluxsg_forecasting.features import build_features, load_history
 from fluxsg_forecasting.fetch import fetch_history
+from fluxsg_forecasting.live import fetch_recent_history, publish_forecast
 from fluxsg_forecasting.model import run_experiment
 
 
@@ -44,6 +45,20 @@ def command_monitor(args: argparse.Namespace) -> dict[str, Any]:
     return report
 
 
+def command_fetch_live(args: argparse.Namespace) -> dict[str, Any]:
+    return fetch_recent_history(args.output, lookback_days=args.lookback_days)
+
+
+def command_publish(args: argparse.Namespace) -> dict[str, Any]:
+    return publish_forecast(
+        recent_path=args.input,
+        model_path=args.model,
+        reference_path=args.reference,
+        metrics_path=args.metrics,
+        output=args.output,
+    )
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description="FluxSG regional PSI forecasting")
     commands = root.add_subparsers(dest="command", required=True)
@@ -51,6 +66,13 @@ def parser() -> argparse.ArgumentParser:
     fetch = commands.add_parser("fetch", help="Download official NEA PSI history")
     fetch.add_argument("--output-dir", type=Path, default=Path("data/raw"))
     fetch.set_defaults(handler=command_fetch)
+
+    fetch_live = commands.add_parser(
+        "fetch-live", help="Download recent hourly PSI readings for production inference"
+    )
+    fetch_live.add_argument("--output", type=Path, default=Path("data/live/nea-psi-live.csv"))
+    fetch_live.add_argument("--lookback-days", type=int, default=9)
+    fetch_live.set_defaults(handler=command_fetch_live)
 
     train = commands.add_parser("train", help="Run the chronological forecasting experiment")
     train.add_argument("--input-dir", type=Path, default=Path("data/raw"))
@@ -67,6 +89,20 @@ def parser() -> argparse.ArgumentParser:
     monitor.add_argument("--output", type=Path, default=Path("artifacts/latest/drift_live.json"))
     monitor.add_argument("--recent-hours", type=int, default=24 * 30)
     monitor.set_defaults(handler=command_monitor)
+
+    publish = commands.add_parser(
+        "publish", help="Create a freshness- and drift-gated public forecast manifest"
+    )
+    publish.add_argument("--input", type=Path, default=Path("data/live/nea-psi-live.csv"))
+    publish.add_argument("--model", type=Path, default=Path("artifacts/latest/model.joblib"))
+    publish.add_argument(
+        "--reference",
+        type=Path,
+        default=Path("artifacts/latest/training_reference.json"),
+    )
+    publish.add_argument("--metrics", type=Path, default=Path("artifacts/latest/metrics.json"))
+    publish.add_argument("--output", type=Path, default=Path("artifacts/latest/forecast.json"))
+    publish.set_defaults(handler=command_publish)
     return root
 
 

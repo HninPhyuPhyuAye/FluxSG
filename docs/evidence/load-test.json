@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-10-14T04:42:46.314011+00:00",
+  "target": "http://127.0.0.1:8000/health",
+  "requests": 500,
+  "concurrency": 25,
+  "duration_seconds": 0.1883,
+  "requests_per_second": 2654.68,
+  "success_rate": 1.0,
+  "latency_seconds": {
+    "p50": 0.0079,
+    "p95": 0.0157,
+    "p99": 0.0302,
+    "max": 0.0309
+  },
+  "status_counts": {
+    "200": 500
+  },
+  "thresholds": {
+    "success_rate_at_least": 0.995,
+    "p95_seconds_below": 0.75
+  },
+  "passed": true
+}

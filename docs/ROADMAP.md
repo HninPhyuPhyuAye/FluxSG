@@ -46,9 +46,11 @@
 
 ## Milestone 5 - Production delivery
 
-- Terraform-managed cloud environment
-- Automated build, security scanning, and deployment
-- Dashboards, SLOs, alerting, backup, and restore drill
-- Load test and cost report
+- [x] Terraform-managed cloud environment
+- [x] Hourly freshness- and drift-gated forecast publication
+- [x] FastAPI forecast contract and citizen-facing release decision
+- [x] Automated build, CodeQL/dependency scanning, and deployment
+- [x] Dashboards, SLOs, alerting, backup, and restore drill
+- [x] Load test and cost report
 
 **Evidence:** live system, operational runbook, performance and cost results.

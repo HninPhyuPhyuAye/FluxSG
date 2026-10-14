@@ -5,6 +5,7 @@ from fluxsg_forecasting.features import (
     TARGET_COLUMN,
     build_features,
     chronological_split,
+    normalise_history,
 )
 
 
@@ -32,3 +33,16 @@ def test_chronological_split_has_no_time_overlap(hourly_history: pd.DataFrame) -
     assert validation["timestamp"].max() < test["timestamp"].min()
     assert len(train) > len(validation)
     assert len(test) > 0
+
+
+def test_normalisation_accepts_mixed_iso_timestamp_formats(
+    hourly_history: pd.DataFrame,
+) -> None:
+    mixed = hourly_history.iloc[:2].copy()
+    mixed.loc[mixed.index[0], "timestamp"] = "2026-10-14T10:00:00+08:00"
+    mixed.loc[mixed.index[1], "timestamp"] = "2026-10-14 02:00:00+00:00"
+
+    result = normalise_history(mixed)
+
+    assert len(result) == 2
+    assert result["timestamp"].notna().all()

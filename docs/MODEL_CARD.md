@@ -10,6 +10,27 @@ training archive ends in 2024. FluxSG therefore does not display this forecast
 as current citizen guidance. Recent-history retraining and production monitoring
 remain required before public release.
 
+## Production release check · 14 October 2026
+
+The Milestone 5 publisher added nine days of current readings and refitted the
+serving artifact through 14 October 2026. Freshness and regional-completeness
+checks passed, but the operational release was **withheld**:
+
+| Production check | Result | Decision |
+|---|---:|---|
+| Candidate holdout MAE | 3.6072 | Failed against persistence |
+| Persistence holdout MAE | **0.6504** | Stronger baseline |
+| Nominal 90% interval coverage | 81.54% | Failed 85% release floor |
+| Recent distribution drift | Alert | Failed |
+| Source freshness | 0.72 hours | Passed |
+| Model age | 1.72 hours | Passed |
+
+This result demonstrates why retraining alone is not a safety argument. The
+current haze period is materially different from the old training distribution,
+and the simple persistence forecast is much stronger. FluxSG therefore hides
+the model estimates from the citizen view while continuing to show official NEA
+observations and the failed release checks.
+
 ## Intended use
 
 The model estimates each Singapore region's 24-hour PSI one hour ahead. It is an

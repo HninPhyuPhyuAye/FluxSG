@@ -14,8 +14,13 @@ From the repository root:
 ```bash
 make forecast-data
 make forecast
+make forecast-live
 make forecast-drift
 ```
+
+`forecast-live` fetches nine days of official hourly data, refits the model,
+and writes a public-manifest candidate whose freshness, holdout performance,
+interval coverage, and drift checks can withhold release.
 
 Raw source files and fitted model artifacts stay local. Version-controlled
 reference results and the complete limitations are in

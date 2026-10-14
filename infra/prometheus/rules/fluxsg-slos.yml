@@ -1,0 +1,49 @@
+groups:
+  - name: fluxsg-slo-recording
+    interval: 30s
+    rules:
+      - record: fluxsg:api_availability:ratio_30d
+        expr: >-
+          1 - (
+            sum(rate(fluxsg_http_requests_total{status=~"5.."}[30d]))
+            /
+            clamp_min(sum(rate(fluxsg_http_requests_total[30d])), 0.000001)
+          )
+      - record: fluxsg:api_latency_p95:seconds_15m
+        expr: >-
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(fluxsg_http_request_duration_seconds_bucket[15m]))
+          )
+      - record: fluxsg:ingestion_freshness:max_seconds
+        expr: max(time() - fluxsg_ingestion_last_success_unixtime)
+
+  - name: fluxsg-slo-alerts
+    rules:
+      - alert: FluxSGAvailabilityBudgetBurn
+        expr: fluxsg:api_availability:ratio_30d < 0.995
+        for: 15m
+        labels:
+          severity: page
+          slo: availability
+        annotations:
+          summary: FluxSG API is below its 99.5% availability objective
+          runbook: docs/RUNBOOK.md#api-slo-alert
+      - alert: FluxSGHighLatency
+        expr: fluxsg:api_latency_p95:seconds_15m > 0.75
+        for: 15m
+        labels:
+          severity: ticket
+          slo: latency
+        annotations:
+          summary: FluxSG API p95 latency exceeds 750 ms
+          runbook: docs/RUNBOOK.md#api-slo-alert
+      - alert: FluxSGIngestionStale
+        expr: fluxsg:ingestion_freshness:max_seconds > 1800
+        for: 10m
+        labels:
+          severity: page
+          slo: freshness
+        annotations:
+          summary: A FluxSG source has not completed ingestion for 30 minutes
+          runbook: docs/RUNBOOK.md#ingestion-freshness-alert

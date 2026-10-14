@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { psiLevel } from "../lib/api";
+import { enforceForecastFreshness, psiLevel } from "../lib/api";
+import type { ForecastSnapshot } from "../lib/api";
 
 describe("FluxSG dashboard", () => {
   it("keeps the product identity stable", () => {
@@ -19,5 +20,42 @@ describe("FluxSG dashboard", () => {
   ])("classifies PSI %i as %s", (psi, expected) => {
     expect(psiLevel(psi)).toBe(expected);
   });
-});
 
+  it("withholds a forecast after its source observation expires", () => {
+    const snapshot: ForecastSnapshot = {
+      schema_version: 1,
+      forecast_type: "regional 24-hour PSI one hour ahead",
+      source: "NEA",
+      source_url: "https://example.test/psi",
+      generated_at: "2026-10-14T00:00:00Z",
+      observed_at: "2026-10-14T00:00:00Z",
+      forecast_for: "2026-10-14T01:00:00Z",
+      available: true,
+      status: "available",
+      expires_at: "2026-10-14T01:00:00Z",
+      reason: "All release guardrails passed.",
+      checks: { source_fresh: true },
+      freshness_hours: 0,
+      model: {
+        name: "test",
+        version: "test-v1",
+        trained_through: "2026-10-14T00:00:00Z",
+        age_hours: 0,
+        test_mae: 0.5,
+        persistence_mae: 0.6,
+        interval_coverage: 0.9,
+        backtest_wins: 3,
+        backtest_folds: 4,
+      },
+      drift: { status: "healthy" },
+      forecasts: [],
+      disclaimer: "Experimental estimate.",
+    };
+
+    const guarded = enforceForecastFreshness(snapshot, Date.parse("2026-10-14T01:00:01Z"));
+
+    expect(guarded.available).toBe(false);
+    expect(guarded.status).toBe("withheld");
+    expect(guarded.checks.source_fresh).toBe(false);
+  });
+});

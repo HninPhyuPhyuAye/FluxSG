@@ -41,3 +41,26 @@ curl -fsS http://localhost:9100/metrics | grep fluxsg_ingestion_runs_total
 Recovery is complete when the affected dataset has a completed or duplicate
 run, Prometheus reports both targets up, and Jaeger shows a non-error worker
 span. Record any quarantined object key before closing the incident.
+
+## API SLO alert
+
+1. Check the outside-in `Production smoke checks` workflow.
+2. Separate 5xx errors from upstream latency in the Grafana request panels.
+3. Inspect the matching route in `/metrics`, then follow its trace in Jaeger.
+4. If the failure is upstream, keep the last successful forecast manifest and
+   allow its expiry guard to withhold stale values.
+5. Confirm availability and p95 return within objective before resolving.
+
+## Ingestion freshness alert
+
+1. Compare `time() - fluxsg_ingestion_last_success_unixtime` by dataset.
+2. Inspect the worker log and trace for the affected dataset.
+3. Run one bounded recovery cycle; never run overlapping unbounded retries.
+4. Confirm a completed or duplicate ledger record and a reset freshness gauge.
+
+## Backup and restore drill
+
+Run `make backup` followed by `make restore-drill`. The drill verifies checksums,
+restores PostgreSQL into the isolated `fluxsg_restore_drill` database, checks
+that application tables exist, and removes the drill database. It never
+overwrites the normal `fluxsg` database.

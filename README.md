@@ -20,8 +20,8 @@ bundle.
 
 ## Current milestone
 
-Milestone 4 adds an honestly evaluated regional haze-forecasting pipeline to the
-live ingestion system and analytics warehouse:
+Milestone 5 delivers the honestly evaluated haze model through an operational
+release system that is allowed to withhold unsafe forecasts:
 
 - a FastAPI service that normalises the live NEA two-hour forecast;
 - a citizen-facing haze watch combining official PSI and PM2.5 feeds;
@@ -42,7 +42,13 @@ live ingestion system and analytics warehouse:
 - four expanding-window backtests and a model promotion gate;
 - validation-calibrated uncertainty intervals and distribution-drift alerts;
 - a model card that explicitly blocks stale offline forecasts from citizen use;
+- hourly recent-data retraining and a machine-readable forecast manifest;
+- freshness, completeness, model-age, interval, and distribution-drift gates;
+- a FastAPI forecast endpoint and dashboard release-decision panel;
 - Prometheus metrics, OpenTelemetry traces, and trace-correlated JSON logs;
+- provisioned Grafana SLO dashboard and Prometheus alert rules;
+- Terraform-managed GitHub and Vercel production configuration;
+- CodeQL, dependency auditing, smoke checks, backup/restore, and load evidence;
 - explicit freshness, completeness, and source-health signals;
 - a responsive Next.js operations dashboard;
 - containerised local development and automated CI checks.
@@ -89,8 +95,8 @@ The ingestion ledger is available at
 S3-compatible object store are started automatically with the API, worker, and
 web dashboard.
 
-Operational views are available at <http://localhost:9090> (Prometheus) and
-<http://localhost:16686> (Jaeger). The worker metrics endpoint is
+Operational views are available at <http://localhost:9090> (Prometheus),
+<http://localhost:16686> (Jaeger), and <http://localhost:3001> (Grafana). The worker metrics endpoint is
 <http://localhost:9100/metrics>.
 
 The secured local build activates the transport search. Try `01012` or
@@ -149,6 +155,10 @@ Run `make forecast-data` followed by `make forecast` to reproduce the full
 official-history experiment. The forecasting design and measured limitations
 are documented in [`docs/FORECASTING.md`](docs/FORECASTING.md) and
 [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md).
+
+Run `make forecast-live` to execute the guarded production publisher locally.
+Production architecture, SLOs, recovery, load evidence, and costs are documented
+in [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 
 ## Delivery roadmap
 

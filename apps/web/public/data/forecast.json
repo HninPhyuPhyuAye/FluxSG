@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "forecast_type": "regional 24-hour PSI one hour ahead",
+  "source": "data.gov.sg / National Environment Agency",
+  "source_url": "https://api-open.data.gov.sg/v2/real-time/api/psi",
+  "generated_at": "2026-10-14T04:30:00+00:00",
+  "observed_at": "2024-12-31T14:00:00+00:00",
+  "forecast_for": "2024-12-31T15:00:00+00:00",
+  "expires_at": "2024-12-31T17:00:00+00:00",
+  "available": false,
+  "status": "withheld",
+  "reason": "Forecast withheld because the reference model is stale and distribution drift requires investigation.",
+  "checks": {
+    "source_fresh": false,
+    "all_regions_present": true,
+    "model_recent": false,
+    "offline_promotion_passed": true,
+    "heldout_beats_persistence": true,
+    "drift_clear": false,
+    "interval_coverage_acceptable": true
+  },
+  "freshness_hours": 15638.5,
+  "model": {
+    "name": "histogram gradient boosting",
+    "version": "psi-hgb-v1",
+    "trained_through": "2024-12-31T13:00:00+00:00",
+    "age_hours": 15639.5,
+    "test_mae": 0.5867,
+    "persistence_mae": 0.5991,
+    "interval_coverage": 0.8893,
+    "backtest_wins": 3,
+    "backtest_folds": 4
+  },
+  "drift": {
+    "status": "alert",
+    "rows_evaluated": 12370,
+    "features": {}
+  },
+  "forecasts": [],
+  "disclaimer": "Experimental estimate, not official guidance. Use current NEA observations and haze.gov.sg advice for health and operational decisions."
+}

@@ -7,6 +7,11 @@ The repository variable `FLUXSG_API_URL` is compiled into the browser bundle as
 `NEXT_PUBLIC_FLUXSG_API_URL`. When the variable is absent, the dashboard uses
 only the credential-free data.gov.sg fallback.
 
+The same workflow runs hourly. It retrains the PSI candidate with official
+archive plus recent readings and publishes a freshness- and drift-gated
+`data/forecast.json`. A failed forecast build leaves the previous deployment in
+place; browser and API expiry checks then withhold it automatically.
+
 - Dashboard: <https://hninphyuphyuaye.github.io/FluxSG/>
 - Production API: <https://fluxsg-api.vercel.app>
 - Interactive API docs: <https://fluxsg-api.vercel.app/docs>
@@ -24,6 +29,7 @@ Required production environment variables:
 | `LTA_ACCOUNT_KEY` | Secret | Authenticates server-to-server LTA DataMall calls |
 | `CORS_ORIGINS` | Config | Allows the GitHub Pages origin |
 | `ENVIRONMENT` | Config | Identifies the production runtime |
+| `FORECAST_MANIFEST_URL` | Config | Points the API at the guarded Pages artifact |
 
 The production CORS value is:
 
@@ -33,6 +39,11 @@ https://hninphyuphyuaye.github.io
 
 The LTA key must be entered through Vercel's secret interface or CLI. It must
 never be copied into `vercel.json`, GitHub Actions variables, or source code.
+
+`infra/terraform` manages the non-secret GitHub environment variables and the
+Vercel manifest URL. `LTA_ACCOUNT_KEY` and, when configured,
+`DATA_GOV_SG_API_KEY` remain in their respective encrypted provider secret
+stores.
 
 Production verification checklist:
 

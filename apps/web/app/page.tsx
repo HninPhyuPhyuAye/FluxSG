@@ -3,6 +3,7 @@
 import {
   getAirQuality,
   getBusArrivals,
+  getForecast,
   getLtaStatus,
   getTransportNetwork,
   getWeather,
@@ -13,6 +14,7 @@ import type {
   AirQualitySnapshot,
   BusArrivalBoard,
   BusStop,
+  ForecastSnapshot,
   LtaStatus,
   TransportNetworkSummary,
   WeatherOutlook,
@@ -34,6 +36,7 @@ export default function Home() {
   const [airQuality, setAirQuality] = useState<AirQualitySnapshot | null>(null);
   const [lta, setLta] = useState<LtaStatus | null>(null);
   const [transport, setTransport] = useState<TransportNetworkSummary | null>(null);
+  const [forecast, setForecast] = useState<ForecastSnapshot | null>(null);
   const [feedState, setFeedState] = useState("Connecting");
   const [stopQuery, setStopQuery] = useState("");
   const [stopResults, setStopResults] = useState<BusStop[]>([]);
@@ -46,17 +49,19 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     const refresh = async () => {
-      const [nextWeather, nextAirQuality, nextLta, nextTransport] = await Promise.all([
+      const [nextWeather, nextAirQuality, nextLta, nextTransport, nextForecast] = await Promise.all([
         getWeather(),
         getAirQuality(),
         getLtaStatus(),
         getTransportNetwork(),
+        getForecast(),
       ]);
       if (!active) return;
       setWeather(nextWeather);
       setAirQuality(nextAirQuality);
       setLta(nextLta);
       setTransport(nextTransport);
+      setForecast(nextForecast);
       setFeedState(nextWeather || nextAirQuality || nextTransport ? "Live" : "Feed unavailable");
     };
     void refresh();
@@ -112,7 +117,7 @@ export default function Home() {
           <span className="brand-mark">F</span>
           <span>FluxSG</span>
         </a>
-        <span className="system-state"><i /> Milestone 02 · {feedState}</span>
+        <span className="system-state"><i /> Milestone 05 · {feedState}</span>
       </header>
 
       <section className="hero" id="top">
@@ -298,6 +303,59 @@ export default function Home() {
         </p>
       </section>
 
+      <section className="forecast-section" aria-labelledby="forecast-title">
+        <div className="forecast-heading">
+          <div>
+            <p className="eyebrow">Guarded one-hour outlook</p>
+            <h2 id="forecast-title">A forecast that can say “do not publish.”</h2>
+          </div>
+          <span className={`forecast-state ${forecast?.available ? "ready" : "withheld"}`}>
+            {forecast?.available ? "Released" : "Withheld"}
+          </span>
+        </div>
+        <p className="forecast-reason">
+          {forecast?.reason ?? "The forecast publication manifest is currently unavailable."}
+        </p>
+
+        {forecast?.available ? (
+          <div className="forecast-grid">
+            {forecast.forecasts.map((item) => (
+              <article key={item.region}>
+                <span>{item.region}</span>
+                <strong>{item.predicted_psi_24h}</strong>
+                <em>{item.predicted_band}</em>
+                <small>90% interval {item.lower_90}–{item.upper_90}</small>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="guardrail-grid">
+            {Object.entries(forecast?.checks ?? {}).map(([check, passed]) => (
+              <div className={passed ? "passed" : "failed"} key={check}>
+                <i aria-hidden="true" />
+                <span>{check.replaceAll("_", " ")}</span>
+                <strong>{passed ? "Pass" : "Block"}</strong>
+              </div>
+            ))}
+            {!forecast && <div className="forecast-empty">No forecast evidence is available yet.</div>}
+          </div>
+        )}
+
+        {forecast && (
+          <div className="forecast-evidence">
+            <div><span>Model test MAE</span><strong>{forecast.model.test_mae}</strong></div>
+            <div><span>Persistence MAE</span><strong>{forecast.model.persistence_mae}</strong></div>
+            <div><span>Interval coverage</span><strong>{Math.round(forecast.model.interval_coverage * 100)}%</strong></div>
+            <div><span>Backtest wins</span><strong>{forecast.model.backtest_wins}/{forecast.model.backtest_folds}</strong></div>
+            <div><span>Drift state</span><strong>{forecast.drift.status ?? "unknown"}</strong></div>
+            <div><span>Forecast time</span><strong>{formatTime(forecast.forecast_for)}</strong></div>
+          </div>
+        )}
+        <p className="forecast-disclaimer">
+          {forecast?.disclaimer ?? "Experimental estimate only. Follow official NEA observations and haze guidance."}
+        </p>
+      </section>
+
       <section className="content-grid">
         <article className="panel conditions">
           <div className="panel-heading">
@@ -350,4 +408,3 @@ export default function Home() {
     </main>
   );
 }
-

@@ -1,7 +1,8 @@
 # Observability
 
 FluxSG's local platform exposes the three signals needed to diagnose ingestion:
-structured JSON logs, Prometheus metrics, and OpenTelemetry traces.
+structured JSON logs, Prometheus metrics, OpenTelemetry traces, and a
+provisioned Grafana SLO dashboard.
 
 ## Start and inspect
 
@@ -10,6 +11,7 @@ docker compose up --build -d
 docker compose logs -f worker
 open http://localhost:9090
 open http://localhost:16686
+open http://localhost:3001
 ```
 
 | Signal | Local endpoint | What to inspect |
@@ -18,6 +20,19 @@ open http://localhost:16686
 | Worker metrics | `http://localhost:9100/metrics` | Runs, records, latency, last success |
 | Prometheus | `http://localhost:9090/targets` | Both FluxSG targets must be `UP` |
 | Jaeger | `http://localhost:16686` | `fluxsg-api` and `fluxsg-worker` traces |
+| Grafana | `http://localhost:3001` | Availability, latency, freshness, and ingestion outcomes |
+
+## Service objectives
+
+| SLO | Objective | Alert |
+|---|---:|---|
+| API availability | 99.5% over 30 days | 15 minutes below objective |
+| API p95 latency | under 750 ms over 15 minutes | 15 minutes above objective |
+| ingestion freshness | under 30 minutes | 10 minutes above objective |
+
+Recording and alert rules live in `infra/prometheus/rules/fluxsg-slos.yml`.
+The twice-hourly GitHub smoke check provides an independent outside-in signal
+for the public API, forecast contract, and dashboard.
 
 The local Compose stack sends OTLP/HTTP spans directly to Jaeger. Jaeger uses
 in-memory storage here, so local traces disappear when its container is

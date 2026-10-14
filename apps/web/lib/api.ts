@@ -123,6 +123,51 @@ export type AirQualitySnapshot = {
   };
 };
 
+export type ForecastSnapshot = {
+  schema_version: number;
+  forecast_type: string;
+  source: string;
+  source_url: string;
+  generated_at: string;
+  observed_at: string;
+  forecast_for: string;
+  expires_at: string;
+  available: boolean;
+  status: "available" | "withheld";
+  reason: string;
+  checks: Record<string, boolean>;
+  freshness_hours: number;
+  model: {
+    name: string;
+    version: string;
+    trained_through: string;
+    age_hours: number;
+    test_mae: number;
+    persistence_mae: number;
+    interval_coverage: number;
+    backtest_wins: number;
+    backtest_folds: number;
+  };
+  drift: {
+    status?: string;
+    rows_evaluated?: number;
+    features?: Record<string, {
+      population_stability_index: number;
+      standardised_mean_shift: number;
+      status: string;
+    }>;
+  };
+  forecasts: Array<{
+    region: string;
+    observed_psi_24h: number;
+    predicted_psi_24h: number;
+    lower_90: number;
+    upper_90: number;
+    predicted_band: string;
+  }>;
+  disclaimer: string;
+};
+
 type RegionValues = Record<string, number>;
 
 type OfficialRegion = {
@@ -161,6 +206,7 @@ type OfficialWeatherResponse = {
 };
 
 const apiUrl = process.env.NEXT_PUBLIC_FLUXSG_API_URL?.replace(/\/$/, "") || null;
+const siteBasePath = process.env.NEXT_PUBLIC_FLUXSG_BASE_PATH ?? "";
 const officialUrls = {
   weather: "https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast",
   psi: "https://api-open.data.gov.sg/v2/real-time/api/psi",
@@ -361,3 +407,28 @@ export async function getAirQuality(): Promise<AirQualitySnapshot | null> {
     ?? getOfficialAirQuality();
 }
 
+export function enforceForecastFreshness(
+  snapshot: ForecastSnapshot,
+  now = Date.now(),
+): ForecastSnapshot {
+  if (!snapshot.available || Date.parse(snapshot.expires_at) > now) return snapshot;
+  return {
+    ...snapshot,
+    available: false,
+    status: "withheld",
+    reason: "Forecast withheld because the published source observation expired.",
+    checks: { ...snapshot.checks, source_fresh: false },
+  };
+}
+
+export async function getForecast(): Promise<ForecastSnapshot | null> {
+  const fromApi = await request<ForecastSnapshot>("/api/v1/forecast/psi");
+  if (fromApi) return enforceForecastFreshness(fromApi);
+  try {
+    const response = await fetch(`${siteBasePath}/data/forecast.json`, { cache: "no-store" });
+    if (!response.ok) return null;
+    return enforceForecastFreshness((await response.json()) as ForecastSnapshot);
+  } catch {
+    return null;
+  }
+}

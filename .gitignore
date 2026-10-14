@@ -27,3 +27,8 @@ ml/artifacts/
 ml/.pytest_cache/
 ml/.ruff_cache/
 ml/*.egg-info/
+.terraform/
+*.tfstate*
+*.tfplan
+crash.log
+backups/
