@@ -23,7 +23,9 @@ jobs:
                 .schema_version == 1 and
                 (.status == "available" or .status == "withheld") and
                 (.checks | type == "object") and
-                (.model.test_mae | type == "number")
+                (.model.test_mae | type == "number") and
+                ((.observed_at | fromdateiso8601) > (now - 10800)) and
+                ((.expires_at | fromdateiso8601) > now)
               '
       - name: Check public dashboard
         run: curl --fail --show-error --silent --retry 3 --output /dev/null https://hninphyuphyuaye.github.io/FluxSG/

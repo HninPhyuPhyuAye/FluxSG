@@ -28,7 +28,7 @@ class ForecastClient:
             raise ForecastSourceError("The forecast manifest is unavailable or invalid") from exc
 
         now = datetime.now(UTC)
-        if manifest.available and manifest.expires_at <= now:
+        if manifest.expires_at <= now:
             checks = {**manifest.checks, "source_fresh": False}
             return manifest.model_copy(
                 update={

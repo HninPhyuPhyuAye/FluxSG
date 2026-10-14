@@ -411,7 +411,7 @@ export function enforceForecastFreshness(
   snapshot: ForecastSnapshot,
   now = Date.now(),
 ): ForecastSnapshot {
-  if (!snapshot.available || Date.parse(snapshot.expires_at) > now) return snapshot;
+  if (Date.parse(snapshot.expires_at) > now) return snapshot;
   return {
     ...snapshot,
     available: false,

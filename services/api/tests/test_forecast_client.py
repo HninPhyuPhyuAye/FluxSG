@@ -80,6 +80,28 @@ async def test_withholds_expired_manifest(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 @pytest.mark.asyncio
+async def test_marks_an_already_withheld_manifest_stale(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = manifest(
+        expires_at=datetime.now(UTC) - timedelta(minutes=1),
+        available=False,
+    )
+
+    async def fake_get(self: httpx.AsyncClient, *args: object, **kwargs: object) -> httpx.Response:
+        request = httpx.Request("GET", "https://example.test/forecast.json")
+        return httpx.Response(200, json=payload, request=request)
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+    result = await ForecastClient("https://example.test/forecast.json").fetch()
+
+    assert result.available is False
+    assert result.status == "withheld"
+    assert result.checks["source_fresh"] is False
+    assert "expired" in result.reason
+
+
+@pytest.mark.asyncio
 async def test_rejects_invalid_manifest(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_get(self: httpx.AsyncClient, *args: object, **kwargs: object) -> httpx.Response:
         request = httpx.Request("GET", "https://example.test/forecast.json")
