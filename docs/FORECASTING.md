@@ -97,4 +97,5 @@ training_reference.json drift-monitoring reference
   have not received the quality control used for official climate records
 
 See [`MODEL_CARD.md`](MODEL_CARD.md) for measured results, limitations, and the
-release decision.
+release decision. The complete reference result is versioned as
+[`ml/reports/reference_metrics.json`](../ml/reports/reference_metrics.json).

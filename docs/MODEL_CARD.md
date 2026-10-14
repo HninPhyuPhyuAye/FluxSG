@@ -94,5 +94,6 @@ Before citizen-facing deployment:
 The deterministic training seed is 42. The pipeline pins Python package
 versions, stores input checksums and chronological boundaries, and writes
 row-level held-out predictions. Run `make forecast` to reproduce the experiment
-and inspect `ml/artifacts/latest/metrics.json` for the complete machine-readable
-record.
+and inspect `ml/artifacts/latest/metrics.json` for the latest machine-readable
+record. The verified Milestone 4 result is committed at
+[`ml/reports/reference_metrics.json`](../ml/reports/reference_metrics.json).

@@ -1,0 +1,220 @@
+{
+  "experiment": "regional_psi_24h_one_hour_ahead",
+  "generated_at": "2026-10-14T04:24:20.132297+00:00",
+  "duration_seconds": 10.434,
+  "target": "regional 24-hour PSI one hour ahead",
+  "source": "data.gov.sg / National Environment Agency historical PSI",
+  "regions": [
+    "central",
+    "east",
+    "north",
+    "south",
+    "west"
+  ],
+  "rows": 82465,
+  "partitions": {
+    "train": {
+      "rows": 57725,
+      "timestamps": 11545,
+      "start": "2023-01-11T03:00:00+00:00",
+      "end": "2024-06-06T19:00:00+00:00"
+    },
+    "validation": {
+      "rows": 12370,
+      "timestamps": 2474,
+      "start": "2024-06-06T20:00:00+00:00",
+      "end": "2024-09-18T16:00:00+00:00"
+    },
+    "test": {
+      "rows": 12370,
+      "timestamps": 2474,
+      "start": "2024-09-18T17:00:00+00:00",
+      "end": "2024-12-31T14:00:00+00:00"
+    }
+  },
+  "validation": {
+    "candidate": {
+      "mae": 0.558,
+      "rmse": 0.8006,
+      "band_accuracy": 0.9819
+    },
+    "persistence": {
+      "mae": 0.5615,
+      "rmse": 0.9172,
+      "band_accuracy": 0.9798
+    },
+    "seasonal_24h": {
+      "mae": 7.2027,
+      "rmse": 9.5352,
+      "band_accuracy": 0.7051
+    }
+  },
+  "test": {
+    "candidate": {
+      "mae": 0.5867,
+      "rmse": 0.8133,
+      "band_accuracy": 0.9809
+    },
+    "persistence": {
+      "mae": 0.5991,
+      "rmse": 0.9401,
+      "band_accuracy": 0.9788
+    },
+    "seasonal_24h": {
+      "mae": 7.2773,
+      "rmse": 9.5396,
+      "band_accuracy": 0.7414
+    }
+  },
+  "uncertainty": {
+    "method": "symmetric validation-residual interval",
+    "nominal_coverage": 0.9,
+    "radius_psi": 1.1988,
+    "coverage": 0.8893,
+    "mean_width": 2.3976
+  },
+  "promotion": {
+    "status": "promoted",
+    "rule": "candidate validation MAE must beat both persistence and 24-hour seasonal baselines, and win a majority of backtests",
+    "backtest_wins": 3,
+    "backtest_folds": 4,
+    "strongest_baseline_mae": 0.5615,
+    "candidate_mae": 0.558,
+    "improvement_percent": 0.62
+  },
+  "backtests": [
+    {
+      "fold": 1,
+      "train_end": "2024-01-17T22:00:00+00:00",
+      "test_start": "2024-01-17T23:00:00+00:00",
+      "test_end": "2024-03-29T03:00:00+00:00",
+      "rows": 8245,
+      "candidate": {
+        "mae": 0.6966,
+        "rmse": 1.2683,
+        "band_accuracy": 0.9772
+      },
+      "persistence": {
+        "mae": 0.5742,
+        "rmse": 0.9616,
+        "band_accuracy": 0.9767
+      },
+      "seasonal_24h": {
+        "mae": 6.5101,
+        "rmse": 8.6995,
+        "band_accuracy": 0.7146
+      }
+    },
+    {
+      "fold": 2,
+      "train_end": "2024-03-29T03:00:00+00:00",
+      "test_start": "2024-03-29T04:00:00+00:00",
+      "test_end": "2024-06-06T19:00:00+00:00",
+      "rows": 8250,
+      "candidate": {
+        "mae": 0.6858,
+        "rmse": 1.0619,
+        "band_accuracy": 0.9804
+      },
+      "persistence": {
+        "mae": 0.7284,
+        "rmse": 1.2414,
+        "band_accuracy": 0.9788
+      },
+      "seasonal_24h": {
+        "mae": 9.8204,
+        "rmse": 12.18,
+        "band_accuracy": 0.6611
+      }
+    },
+    {
+      "fold": 3,
+      "train_end": "2024-06-06T19:00:00+00:00",
+      "test_start": "2024-06-06T20:00:00+00:00",
+      "test_end": "2024-08-15T04:00:00+00:00",
+      "rows": 8245,
+      "candidate": {
+        "mae": 0.5545,
+        "rmse": 0.7968,
+        "band_accuracy": 0.9818
+      },
+      "persistence": {
+        "mae": 0.5579,
+        "rmse": 0.9136,
+        "band_accuracy": 0.98
+      },
+      "seasonal_24h": {
+        "mae": 7.3381,
+        "rmse": 9.7658,
+        "band_accuracy": 0.7133
+      }
+    },
+    {
+      "fold": 4,
+      "train_end": "2024-08-15T04:00:00+00:00",
+      "test_start": "2024-08-15T05:00:00+00:00",
+      "test_end": "2024-10-23T06:00:00+00:00",
+      "rows": 8245,
+      "candidate": {
+        "mae": 0.5534,
+        "rmse": 0.7811,
+        "band_accuracy": 0.9811
+      },
+      "persistence": {
+        "mae": 0.5753,
+        "rmse": 0.9248,
+        "band_accuracy": 0.9793
+      },
+      "seasonal_24h": {
+        "mae": 7.2519,
+        "rmse": 9.5812,
+        "band_accuracy": 0.7015
+      }
+    }
+  ],
+  "drift": {
+    "status": "alert",
+    "rows_evaluated": 12370,
+    "features": {
+      "psi_twenty_four_hourly": {
+        "population_stability_index": 0.2456,
+        "standardised_mean_shift": 0.394,
+        "status": "warning"
+      },
+      "pm25_twenty_four_hourly": {
+        "population_stability_index": 0.2655,
+        "standardised_mean_shift": 0.3205,
+        "status": "alert"
+      },
+      "pm10_twenty_four_hourly": {
+        "population_stability_index": 0.0792,
+        "standardised_mean_shift": 0.0793,
+        "status": "healthy"
+      },
+      "o3_eight_hour_max": {
+        "population_stability_index": 0.0955,
+        "standardised_mean_shift": 0.2825,
+        "status": "healthy"
+      }
+    }
+  },
+  "reproducibility": {
+    "git_sha": "eeeda1e8be8227dff515511fa97da4fffc724dfc",
+    "python": "3.13.16",
+    "pandas": "3.0.6",
+    "scikit_learn": "1.9.1",
+    "random_state": 42,
+    "inputs": [
+      {
+        "path": "data/raw/nea-psi-2023.csv",
+        "bytes": 7124807,
+        "sha256": "9ff1b8ef16c95cb57ef3e62a17a0bfedb93b0e60cad1a9f394d94490659bf37f"
+      },
+      {
+        "path": "data/raw/nea-psi-2024.csv",
+        "bytes": 7355503,
+        "sha256": "18c9fbb5ac9bc42caabbd4000f95ea9727d11bf5a785898bef4cb1f2ac707d37"
+      }
+    ]
+  }
+}
