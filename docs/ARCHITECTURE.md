@@ -12,9 +12,12 @@ flowchart LR
   Q --> B
   B --> S[dbt silver views]
   S --> G[dbt gold marts]
-  G --> F[Forecast training]
+  G --> F[Forecast feature pipeline]
+  H[Historical NEA PSI archive] --> F
+  F --> M[Backtests + promotion gate]
+  M --> ART[Model + metrics + drift profile]
   G --> A[FastAPI]
-  F --> A
+  ART -. production release .-> A
   A --> UI[Next.js dashboard]
   I --> O[Metrics + logs]
   A --> O
@@ -30,6 +33,12 @@ flowchart LR
   validity are visible to users and monitored like application health.
 - **Forecasting starts with a baseline.** A complex model is shipped only if it
   beats a transparent naive prediction on held-out time periods.
+- **Time order is never shuffled.** All regions share chronological train,
+  validation, and test boundaries, and expanding-window backtests measure
+  stability across different periods.
+- **Offline promotion is not public deployment.** A model can pass its benchmark
+  while remaining blocked from citizen use because of stale training data,
+  distribution drift, weak uncertainty coverage, or safety review.
 - **Credentials stay server-side.** LTA keys are read from environment or a
   cloud secret manager and never sent to the browser.
 - **Static transport metadata is bounded and cached.** The LTA adapter follows
@@ -50,6 +59,7 @@ services/api/      FastAPI source and domain API
 services/api/app/pipelines/ scheduled snapshot ingestion and run ledger
 infra/             local PostgreSQL and S3-compatible storage configuration
 warehouse/         bronze loader, dbt models, tests, analyses, and fixtures
+ml/                historical downloader, feature pipeline, model, tests, and drift checks
 docs/              product, data, architecture, and delivery evidence
 .github/workflows/ automated quality gates
 ```
@@ -58,4 +68,3 @@ The warehouse implements the medallion design end to end. Immutable source
 objects become queryable bronze JSONB records, silver views normalise provider
 payloads, and contracted gold models expose dimensional and analytical data.
 See [`WAREHOUSE.md`](WAREHOUSE.md) for lineage and reproducible evidence.
-

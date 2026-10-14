@@ -22,4 +22,8 @@ warehouse/target/
 warehouse/logs/
 warehouse/dbt_packages/
 warehouse/.user.yml
-
+ml/data/
+ml/artifacts/
+ml/.pytest_cache/
+ml/.ruff_cache/
+ml/*.egg-info/

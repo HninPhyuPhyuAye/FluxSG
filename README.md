@@ -20,7 +20,8 @@ bundle.
 
 ## Current milestone
 
-Milestone 3 turns the live ingestion system into a tested analytics warehouse:
+Milestone 4 adds an honestly evaluated regional haze-forecasting pipeline to the
+live ingestion system and analytics warehouse:
 
 - a FastAPI service that normalises the live NEA two-hour forecast;
 - a citizen-facing haze watch combining official PSI and PM2.5 feeds;
@@ -35,6 +36,12 @@ Milestone 3 turns the live ingestion system into a tested analytics warehouse:
 - 79 automated warehouse tests plus a source-freshness gate, covering keys,
   relationships, and Singapore-specific data domains;
 - reproducible SQL answering route-level haze exposure and pipeline health;
+- an official 2023–2024 NEA historical-data downloader with source checksums;
+- leakage-safe, chronological train/validation/test feature engineering;
+- seasonal and persistence baselines against histogram gradient boosting;
+- four expanding-window backtests and a model promotion gate;
+- validation-calibrated uncertainty intervals and distribution-drift alerts;
+- a model card that explicitly blocks stale offline forecasts from citizen use;
 - Prometheus metrics, OpenTelemetry traces, and trace-correlated JSON logs;
 - explicit freshness, completeness, and source-health signals;
 - a responsive Next.js operations dashboard;
@@ -57,6 +64,8 @@ data.gov.sg / LTA DataMall
                                   +--> dbt bronze / silver / gold
                                   |              |
                        Prometheus + Jaeger   analytics marts
+                                                 |
+                                historical PSI + forecast evaluation
 ```
 
 The architecture and warehouse lineage are documented in
@@ -127,6 +136,7 @@ requests. Live arrivals are fetched on demand from LTA DataMall.
 ```bash
 make check
 make warehouse
+make forecast-test
 ```
 
 `make warehouse` loads the immutable snapshots into PostgreSQL, builds every
@@ -134,6 +144,11 @@ dbt model, runs the warehouse quality suite, checks source freshness, and
 generates interactive documentation. Use `make warehouse-fixtures` for the
 credential-free deterministic dataset and `make warehouse-docs` to open the
 lineage site at <http://localhost:8080>.
+
+Run `make forecast-data` followed by `make forecast` to reproduce the full
+official-history experiment. The forecasting design and measured limitations
+are documented in [`docs/FORECASTING.md`](docs/FORECASTING.md) and
+[`docs/MODEL_CARD.md`](docs/MODEL_CARD.md).
 
 ## Delivery roadmap
 
@@ -159,4 +174,3 @@ FluxSG is an independent portfolio project. It is not affiliated with or
 endorsed by Singapore's Land Transport Authority, NEA, or data.gov.sg. Source
 availability and timestamps are always shown; predictions will be labelled as
 estimates and never presented as official operational guidance.
-

@@ -113,6 +113,17 @@ services:
       object-store:
         condition: service_started
 
+  forecast:
+    profiles: ["forecast"]
+    build:
+      context: ./ml
+    environment:
+      DATA_GOV_SG_API_KEY: ${DATA_GOV_SG_API_KEY:-}
+      GIT_SHA: ${GIT_SHA:-unknown}
+    volumes:
+      - ./ml/data:/workspace/data
+      - ./ml/artifacts:/workspace/artifacts
+
   web:
     build:
       context: .
@@ -135,4 +146,3 @@ services:
 volumes:
   postgres-data:
   object-store-data:
-

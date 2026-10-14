@@ -36,11 +36,11 @@
 
 ## Milestone 4 - Forecasting
 
-- Time-based train/validation/test split
-- Naive seasonal baseline
-- Candidate forecasting model and feature pipeline
-- Backtesting, uncertainty intervals, and drift monitoring
-- Model card covering limits and failure modes
+- [x] Time-based train/validation/test split
+- [x] Naive seasonal and persistence baselines
+- [x] Candidate forecasting model and leakage-safe feature pipeline
+- [x] Expanding-window backtesting, uncertainty intervals, and drift monitoring
+- [x] Model card covering limits and failure modes
 
 **Evidence:** honest model comparison and reproducible experiment tracking.
 
@@ -52,4 +52,3 @@
 - Load test and cost report
 
 **Evidence:** live system, operational runbook, performance and cost results.
-

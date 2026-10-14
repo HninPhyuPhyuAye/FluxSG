@@ -36,6 +36,18 @@
 - Presentation: the highest regional 24-hour PSI drives the national alert band;
   each regional value remains visible so the user can make a local decision
 
+## Historical NEA PSI archive
+
+- Provider: data.gov.sg / National Environment Agency
+- Collection: Historical Pollutant Standards Index, collection `2215`
+- Current training datasets: 2023 and 2024 hourly regional CSVs
+- Current use: one-hour-ahead regional 24-hour PSI forecasting and backtesting
+- Retrieval: official dataset initiate-download and poll-download APIs
+- Reproducibility: raw files remain local; SHA-256 checksums, dataset IDs, time
+  partitions, and model package versions are recorded for every experiment
+- Source caveat: data.gov.sg states that the archive can contain missing records
+  and has not undergone the quality control used for official climate records
+
 PSI bands follow Singapore's official categories: Good (0-50), Moderate
 (51-100), Unhealthy (101-200), Very Unhealthy (201-300), and Hazardous
 (above 300). Citizen guidance links to `haze.gov.sg`; FluxSG does not replace
@@ -51,4 +63,3 @@ retention conditions, and attribution requirements will be recorded here.
 - Rejected records will be quarantined with a machine-readable reason.
 - Raw, cleaned, and analytical datasets will have separate schemas and access
   policies.
-
